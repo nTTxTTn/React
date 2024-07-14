@@ -10,8 +10,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: yellowgreen;
-  color: yellowgreen;
+  background-color: black;
+  color: red;
   padding: 10px;
 }
 
@@ -40,8 +40,48 @@ body {
 
 .logo {
   height: 30px;
-  margin-right: 10px;
+  margin-right: 50px;
   margin-left: 0;
+}
+
+.App {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.content-wrapper {
+  padding: 0 20px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.grid-item {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .grid-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .grid-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 .App-logo {

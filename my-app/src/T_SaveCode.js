@@ -4,13 +4,22 @@ import './App.css';
 
 function App() {
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [results, setResults] = React.useState([
+        { id: 1, word: '세계수도', definition: '세계의 수도',},
+        { id: 2, word: '영화', definition: '세계의 영화' },
+        { id: 3, word: '동물', definition: '세계의 동물' },
+        { id: 4, word: '인물', definition: '세계의 인물' },
+        { id: 5, word: '세계수도2', definition: '세계의 수도2',},
+        { id: 6, word: '영화2', definition: '세계의 영화2' },
+        { id: 7, word: '동물2', definition: '세계의 동물2' },
+        { id: 8, word: '인물2', definition: '세계의 인물2' },
+    ]);
 
     const handleSearchTermChange = (event) => {
         setSearchTerm(event.target.value);
     };
 
     const handleSearch = () => {
-        // 검색 로직을 여기에 추가할 수 있습니다.
         console.log(`Searching for: ${searchTerm}`);
     };
 
@@ -18,6 +27,7 @@ function App() {
         <div className="App">
             <div className="black-nav">
                 <div className="search-bar">
+                    <img src={logo} alt="Logo" className="logo" />
                     <input
                         type="text"
                         placeholder="검색"
@@ -32,7 +42,15 @@ function App() {
 
             <main>
                 <h1>단어퀴즈배열</h1>
-                <p>You searched for: {searchTerm}</p>
+                <p>검색결과: {searchTerm}</p>
+                <div className="grid-container">
+                    {results.map((result) => (
+                        <div key={result.id} className="grid-item">
+                            <h3>{result.word}</h3>
+                            <p>{result.definition}</p>
+                        </div>
+                    ))}
+                </div>
             </main>
         </div>
     );

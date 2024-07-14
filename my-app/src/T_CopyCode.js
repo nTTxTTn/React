@@ -1,69 +1,101 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import logo from './logo.svg';
 import './App.css';
 
 function App() {
-    const [searchTerm, setSearchTerm] = React.useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [results, setResults] = useState([]);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const loader = useRef(null);
+
+    useEffect(() => {
+        loadMore();
+    }, []);
+
+    useEffect(() => {
+        const options = {
+            root: null,
+            rootMargin: "20px",
+            threshold: 1.0
+        };
+
+        const observer = new IntersectionObserver(handleObserver, options);
+        if (loader.current) {
+            observer.observe(loader.current);
+        }
+
+        return () => {
+            if (loader.current) {
+                observer.unobserve(loader.current);
+            }
+        };
+    }, []);
+
+    const handleObserver = (entities) => {
+        const target = entities[0];
+        if (target.isIntersecting) {
+            setPage((prev) => prev + 1);
+        }
+    };
+
+    const loadMore = () => {
+        setLoading(true);
+        // 실제 API 호출 대신 더미 데이터를 생성합니다.
+        setTimeout(() => {
+            const newResults = Array.from({ length: 8 }, (_, i) => ({
+                id: results.length + i + 1,
+                word: `단어 ${results.length + i + 1}`,
+                definition: `정의 ${results.length + i + 1}`
+            }));
+            setResults(prev => [...prev, ...newResults]);
+            setLoading(false);
+        }, 1000);
+    };
+
+    useEffect(() => {
+        loadMore();
+    }, [page]);
 
     const handleSearchTermChange = (event) => {
         setSearchTerm(event.target.value);
     };
 
     const handleSearch = () => {
-        // 검색 기능 구현
         console.log(`Searching for: ${searchTerm}`);
     };
 
     return (
         <div className="App">
-            <header className="App-header">
-                <div className="logo">Machugi</div>
+            <div className="black-nav">
                 <div className="search-bar">
+                    <img src={logo} alt="Logo" className="logo" />
                     <input
                         type="text"
-                        placeholder="퀴즈를 검색해보세요!"
+                        placeholder="검색"
                         value={searchTerm}
                         onChange={handleSearchTermChange}
                     />
                     <button onClick={handleSearch}>검색</button>
                 </div>
-            </header>
+            </div>
 
-            <nav>
-                <ul>
-                    <li><a href="#">국기 퀴즈</a></li>
-                    <li><a href="#">포켓몬 퀴즈</a></li>
-                    <li><a href="#">유튜버 퀴즈</a></li>
-                    <li><a href="#">과자 퀴즈</a></li>
-                    <li><a href="#">인물 퀴즈</a></li>
-                    <li><a href="#">축구 퀴즈</a></li>
-                    <li><a href="#">애니 퀴즈</a></li>
-                    <li><a href="#">로고 퀴즈</a></li>
-                </ul>
-            </nav>
+            <h4>단어퀴즈</h4>
 
             <main>
-                <section>
-                    <h2>인기 퀴즈</h2>
-                    <ul>
-                        <li><a href="#">국기 맞추기</a></li>
-                        <li><a href="#">포켓몬 이름 맞추기</a></li>
-                        <li><a href="#">유튜버 얼굴 맞추기</a></li>
-                    </ul>
-                </section>
-
-                <section>
-                    <h2>신규 퀴즈</h2>
-                    <ul>
-                        <li><a href="#">4세대 걸그룹 멤버 맞추기</a></li>
-                        <li><a href="#">노래 가사 맞추기</a></li>
-                        <li><a href="#">만화 캐릭터 맞추기</a></li>
-                    </ul>
-                </section>
+                <h1>단어퀴즈배열</h1>
+                <p>검색결과: {searchTerm}</p>
+                <div className="grid-container">
+                    {results.map((result) => (
+                        <div key={result.id} className="grid-item">
+                            <h3>{result.word}</h3>
+                            <p>{result.definition}</p>
+                        </div>
+                    ))}
+                </div>
+                {loading && <p>Loading...</p>}
+                <div ref={loader} />
             </main>
-
-            <footer>
-                <p>&copy; 2023 Machugi. All rights reserved.</p>
-            </footer>
         </div>
     );
 }
