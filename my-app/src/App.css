@@ -38,6 +38,41 @@ body {
   cursor: pointer;
 }
 
+.search-result {
+  background-color: #f0f0f0;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+.search-result h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.search-result-item {
+  background-color: #fff;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.search-result-item h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.search-result-item p {
+  color: #34495e;
+}
+
+.loading-message {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+}
+
 .logo {
   height: 30px;
   margin-right: 50px;
