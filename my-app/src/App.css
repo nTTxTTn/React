@@ -15,6 +15,20 @@ body {
   padding: 10px;
 }
 
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px; /* 필요에 따라 조정 가능 */
+}
+
+.loading-message {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+}
+
 .search-bar {
   display: flex;
   align-items: center;

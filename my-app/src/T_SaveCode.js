@@ -1,33 +1,113 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
 function App() {
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [results, setResults] = React.useState([
-        { id: 1, word: '세계수도', definition: '세계의 수도',},
-        { id: 2, word: '영화', definition: '세계의 영화' },
-        { id: 3, word: '동물', definition: '세계의 동물' },
-        { id: 4, word: '인물', definition: '세계의 인물' },
-        { id: 5, word: '세계수도2', definition: '세계의 수도2',},
-        { id: 6, word: '영화2', definition: '세계의 영화2' },
-        { id: 7, word: '동물2', definition: '세계의 동물2' },
-        { id: 8, word: '인물2', definition: '세계의 인물2' },
-    ]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [results, setResults] = useState([]);
+    const [filteredResults, setFilteredResults] = useState([]);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [isSearching, setIsSearching] = useState(false);
+    const loader = useRef(null);
+
+    const loadMore = useCallback(() => {
+        if (loading || !hasMore) return;
+        setLoading(true);
+        console.log('Loading more...', page);
+        setTimeout(() => {
+            const newResults = Array.from({ length: 8 }, (_, i) => ({
+                id: results.length + i + 1,
+                word: `단어 ${results.length + i + 1}`,
+                definition: `정의 ${results.length + i + 1}`
+            }));
+            setResults(prev => {
+                console.log('Updating results:', [...prev, ...newResults]);
+                return [...prev, ...newResults];
+            });
+            setLoading(false);
+            setPage(prevPage => prevPage + 1);
+            if (newResults.length < 8) {
+                setHasMore(false);
+            }
+            console.log('New data loaded', newResults.length);
+        }, 1000);
+    }, [loading, hasMore, results.length, page]);
+
+    const handleObserver = useCallback((entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && !loading && hasMore) {
+            loadMore();
+        }
+    }, [loading, hasMore, loadMore]);
+
+    useEffect(() => {
+        const option = {
+            root: null,
+            rootMargin: "20px",
+            threshold: 0
+        };
+        const observer = new IntersectionObserver(handleObserver, option);
+        if (loader.current) observer.observe(loader.current);
+
+        return () => {
+            if (loader.current) observer.unobserve(loader.current);
+        }
+    }, [handleObserver]);
+
+    useEffect(() => {
+        loadMore();
+    }, [loadMore]);
+
+    useEffect(() => {
+        console.log('Updated results:', results);
+    }, [results]);
 
     const handleSearchTermChange = (event) => {
-        setSearchTerm(event.target.value);
+        const newSearchTerm = event.target.value;
+        console.log('New search term:', newSearchTerm);
+        setSearchTerm(newSearchTerm);
+    };
+
+    const filterResults = (searchTerm, results) => {
+        return results.filter(item =>
+            item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.definition.toLowerCase().includes(searchTerm.toLowerCase())
+        );
     };
 
     const handleSearch = () => {
+        if (searchTerm.trim() === '') {
+            setIsSearching(false);
+            setFilteredResults([]);
+            return;
+        }
         console.log(`Searching for: ${searchTerm}`);
+        console.log('Current results:', results);
+        const filtered = filterResults(searchTerm, results);
+        console.log('Filtered results:', filtered);
+        setFilteredResults(filtered);
+        setIsSearching(true);
+    };
+
+    const handleLogoClick = () => {
+        setIsSearching(false);
+        setSearchTerm('');
+        setFilteredResults([]);
     };
 
     return (
         <div className="App">
             <div className="black-nav">
                 <div className="search-bar">
-                    <img src={logo} alt="Logo" className="logo" />
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        className="logo"
+                        onClick={handleLogoClick}
+                        style={{ cursor: 'pointer' }}
+                    />
                     <input
                         type="text"
                         placeholder="검색"
@@ -38,20 +118,56 @@ function App() {
                 </div>
             </div>
 
-            <h4>단어퀴즈</h4>
+            <div className="content-wrapper">
+                <h4>단어퀴즈</h4>
 
-            <main>
-                <h1>단어퀴즈배열</h1>
-                <p>검색결과: {searchTerm}</p>
-                <div className="grid-container">
-                    {results.map((result) => (
-                        <div key={result.id} className="grid-item">
-                            <h3>{result.word}</h3>
-                            <p>{result.definition}</p>
-                        </div>
-                    ))}
-                </div>
-            </main>
+                <main>
+                    <h1>단어퀴즈배열</h1>
+                    {isSearching ? (
+                        <>
+                            {filteredResults.length > 0 ? (
+                                <div className="search-result">
+                                    <h2>검색 결과: {filteredResults.length}개</h2>
+                                    {filteredResults.map((result) => (
+                                        <div key={result.id} className="search-result-item">
+                                            <h3>{result.word}</h3>
+                                            <p>{result.definition}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p>{searchTerm ? "검색 결과가 없습니다." : "검색어를 입력해주세요."}</p>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <div className="grid-container">
+                                {results.length > 0 ? (
+                                    results.map((result) => (
+                                        <div key={result.id} className="grid-item">
+                                            <h3>{result.word}</h3>
+                                            <p>{result.definition}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>데이터를 로딩 중입니다...</p>
+                                )}
+                            </div>
+                            {loading && (
+                                <p className="loading-message">
+                                    로딩중입니다<br />
+                                    잠시만 기다려주세요!
+                                </p>
+                            )}
+                            {hasMore ? (
+                                <div ref={loader} style={{height: '20px', margin: '20px 0'}} />
+                            ) : (
+                                <p>더 이상 데이터가 없습니다</p>
+                            )}
+                        </>
+                    )}
+                </main>
+            </div>
         </div>
     );
 }
