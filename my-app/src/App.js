@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode'; // 중괄호를 사용하여 jwtDecode를 임포트
 import logo from './logo.svg';
 import './App.css';
 
@@ -15,8 +15,7 @@ function App() {
     const [user, setUser] = useState(null);
     const loader = useRef(null);
 
-    // Google 클라이언트 ID를 여기에 입력하세요
-    const clientId = "260071461232-28kfnkfhca1r8do97pc3u93nup090k6q.apps.googleusercontent.com"; //본인 구글 클라이언트 ID
+    const clientId = "975748536663-l3s514093q9ebfojgfblkcul6p9p5gr0.apps.googleusercontent.com"; //본인 구글 클라이언트 ID
 
     const loadMore = useCallback(() => {
         if (loading || !hasMore) return;
@@ -133,7 +132,7 @@ function App() {
                         <button onClick={handleSearch}>검색</button>
                         {user ? (
                             <div className="user-info">
-                                <img src={user.picture} alt={user.name} style={{width: '30px', borderRadius: '50%'}} />
+                                <img src={user.picture} alt={user.name} style={{ width: '30px', borderRadius: '50%' }} />
                                 <span>{user.name}</span>
                                 <button onClick={() => setUser(null)}>Logout</button>
                             </div>
@@ -169,10 +168,10 @@ function App() {
                             <>
                                 <div className="grid-container">
                                     {results.map((result) => (
-                                        <div key={result.id} className="grid-item">
+                                        <button key={result.id} className="grid-item">
                                             <h3>{result.word}</h3>
                                             <p>{result.definition}</p>
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                                 {loading && (
@@ -182,7 +181,7 @@ function App() {
                                     </p>
                                 )}
                                 {hasMore ? (
-                                    <div ref={loader} style={{height: '20px', margin: '20px 0'}} />
+                                    <div ref={loader} style={{ height: '20px', margin: '20px 0' }} />
                                 ) : (
                                     <p>더 이상 데이터가 없습니다</p>
                                 )}

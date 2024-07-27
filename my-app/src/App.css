@@ -1,5 +1,8 @@
 .App {
   text-align: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 body {
@@ -93,12 +96,6 @@ body {
   margin-left: 0;
 }
 
-.App {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
 .content-wrapper {
   padding: 0 20px;
 }
@@ -110,9 +107,25 @@ body {
 }
 
 .grid-item {
-  border: 1px solid #ddd;
-  padding: 10px;
+  background-color: #f0f0f0;
+  border: none;
+  padding: 20px;
   text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.grid-item:hover {
+  background-color: #e0e0e0;
+}
+
+.grid-item h3 {
+  margin: 0 0 10px 0;
+}
+
+.grid-item p {
+  margin: 0;
+  color: #555;
 }
 
 @media (max-width: 1200px) {
