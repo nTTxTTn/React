@@ -1,3 +1,5 @@
+// App.js
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
@@ -165,7 +167,7 @@ function AppContent() {
             {/* 네비게이션 바 */}
             <div className="black-nav">
                 <div className="search-bar">
-                    {/* 로고 및 검색 입력 필드 */}
+                    {/* 로고 */}
                     <img
                         src={logo}
                         alt="Logo"
@@ -173,6 +175,9 @@ function AppContent() {
                         onClick={handleLogoClick}
                         style={{ cursor: 'pointer' }}
                     />
+                    {/* 단어퀴즈 타이틀 */}
+                    <h1 className="app-title">단어퀴즈</h1>
+                    {/* 검색 입력 필드 */}
                     <input
                         type="text"
                         placeholder="검색"
@@ -199,57 +204,60 @@ function AppContent() {
 
             {/* 메인 컨텐츠 */}
             <div className="content-wrapper">
-                <h4>단어퀴즈</h4>
-
                 <main>
                     <Routes>
                         <Route path="/word/:id" element={<WordDetail />} />
                         <Route path="/" element={
                             <>
-                                <h1>단어 목록</h1>
-                                {/* 검색 결과 또는 전체 결과 표시 */}
-                                {isSearching ? (
-                                    filteredResults.length > 0 ? (
-                                        <div className="search-result">
-                                            <h2>검색 결과: {filteredResults.length}개</h2>
-                                            {filteredResults.map((result) => (
-                                                <div key={result.id} className="search-result-item">
-                                                    <Link to={`/word/${result.id}`}>
-                                                        <h3>{result.term}</h3>
-                                                    </Link>
+                                {/* 단어 목록을 큰 사각형 안에 배치 */}
+                                <div className="word-list-container">
+                                    <h2 className="word-list-title">단어목록</h2>
+                                    {/* 검색 결과 또는 전체 결과 표시 */}
+                                    {isSearching ? (
+                                        filteredResults.length > 0 ? (
+                                            <div className="search-result">
+                                                <h3>검색 결과: {filteredResults.length}개</h3>
+                                                <div className="grid-container">
+                                                    {filteredResults.map((result) => (
+                                                        <div key={result.id} className="grid-item">
+                                                            <Link to={`/word/${result.id}`}>
+                                                                <h3>{result.term}</h3>
+                                                            </Link>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p>검색 결과가 없습니다.</p>
-                                    )
-                                ) : (
-                                    <>
-                                        {/* 그리드 형태로 결과 표시 */}
-                                        <div className="grid-container">
-                                            {results.map((result) => (
-                                                <div key={result.id} className="grid-item">
-                                                    <Link to={`/word/${result.id}`}>
-                                                        <h3>{result.term}</h3>
-                                                    </Link>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {/* 로딩 메시지 */}
-                                        {loading && (
-                                            <p className="loading-message">
-                                                로딩중입니다<br />
-                                                잠시만 기다려주세요!
-                                            </p>
-                                        )}
-                                        {/* 무한 스크롤을 위한 로더 요소 */}
-                                        {hasMore ? (
-                                            <div ref={loader} style={{height: '20px', margin: '20px 0'}} />
+                                            </div>
                                         ) : (
-                                            <p>더 이상 데이터가 없습니다</p>
-                                        )}
-                                    </>
-                                )}
+                                            <p>검색 결과가 없습니다.</p>
+                                        )
+                                    ) : (
+                                        <>
+                                            {/* 그리드 형태로 결과 표시 */}
+                                            <div className="grid-container">
+                                                {results.map((result) => (
+                                                    <div key={result.id} className="grid-item">
+                                                        <Link to={`/word/${result.id}`}>
+                                                            <h3>{result.term}</h3>
+                                                        </Link>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {/* 로딩 메시지 */}
+                                            {loading && (
+                                                <p className="loading-message">
+                                                    로딩중입니다<br />
+                                                    잠시만 기다려주세요!
+                                                </p>
+                                            )}
+                                            {/* 무한 스크롤을 위한 로더 요소 */}
+                                            {hasMore ? (
+                                                <div ref={loader} style={{height: '20px', margin: '20px 0'}} />
+                                            ) : (
+                                                <p>더 이상 데이터가 없습니다</p>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </>
                         } />
                     </Routes>

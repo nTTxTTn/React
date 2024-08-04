@@ -32,13 +32,13 @@ function WordDetail() {
             <p><strong>예문:</strong></p>
             <ul>
                 {wordDetail.examples.map((example, index) => (
-                    <li key={index}>{example}</li>
+                    <li key={`example-${wordDetail.id}-${index}`}>{example}</li>
                 ))}
             </ul>
             <p><strong>유의어:</strong></p>
             <ul>
                 {wordDetail.synonyms.map((synonym, index) => (
-                    <li key={index}>{synonym}</li>
+                    <li key={`synonym-${wordDetail.id}-${index}`}>{synonym}</li>
                 ))}
             </ul>
         </div>
@@ -67,15 +67,19 @@ function AppContent() {
     const loadMore = useCallback(() => {
         if (loading || !hasMore) return;
         setLoading(true);
-        console.log('Loading more...', page);
+        console.log('더 많은 데이터를 불러오는 중...', page);
 
         fetchWords(page).then(({ words: newWords, hasMore: moreAvailable }) => {
-            setResults(prev => [...prev, ...newWords]);
+            setResults(prev => {
+                const combinedResults = [...prev, ...newWords];
+                return Array.from(new Set(combinedResults.map(w => w.id)))
+                    .map(id => combinedResults.find(w => w.id === id));
+            });
             setLoading(false);
             setPage(prevPage => prevPage + 1);
             setHasMore(moreAvailable);
         }).catch(error => {
-            console.error('Error fetching words:', error);
+            console.error('단어 불러오기 오류:', error);
             setLoading(false);
         });
     }, [loading, hasMore, page]);
@@ -110,7 +114,7 @@ function AppContent() {
 
     // 결과 업데이트 로깅
     useEffect(() => {
-        console.log('Updated results:', results);
+        console.log('업데이트된 결과:', results);
     }, [results]);
 
     // 검색어 변경 및 엔터 키 처리 핸들러
@@ -130,10 +134,10 @@ function AppContent() {
 
     // 검색 실행 함수
     const handleSearch = () => {
-        console.log(`Searching for: ${searchTerm}`);
-        console.log('Current results:', results);
+        console.log(`검색어: ${searchTerm}`);
+        console.log('현재 결과:', results);
         const filtered = filterResults(searchTerm, results);
-        console.log('Filtered results:', filtered);
+        console.log('필터링된 결과:', filtered);
         setFilteredResults(filtered);
         setIsSearching(true);
     };
@@ -153,13 +157,13 @@ function AppContent() {
     // Google 로그인 성공 핸들러
     const onLoginSuccess = (credentialResponse) => {
         const userObject = jwtDecode(credentialResponse.credential);
-        console.log('Login Success:', userObject);
+        console.log('로그인 성공:', userObject);
         setUser(userObject);
     };
 
     // Google 로그인 실패 핸들러
     const onLoginFailure = () => {
-        console.log('Login Failed');
+        console.log('로그인 실패');
     };
 
     return (
@@ -218,8 +222,8 @@ function AppContent() {
                                             <div className="search-result">
                                                 <h3>검색 결과: {filteredResults.length}개</h3>
                                                 <div className="grid-container">
-                                                    {filteredResults.map((result) => (
-                                                        <div key={result.id} className="grid-item">
+                                                    {filteredResults.map((result, index) => (
+                                                        <div key={`filtered-${result.id}-${index}`} className="grid-item">
                                                             <Link to={`/word/${result.id}`}>
                                                                 <h3>{result.term}</h3>
                                                             </Link>
@@ -234,8 +238,8 @@ function AppContent() {
                                         <>
                                             {/* 그리드 형태로 결과 표시 */}
                                             <div className="grid-container">
-                                                {results.map((result) => (
-                                                    <div key={result.id} className="grid-item">
+                                                {results.map((result, index) => (
+                                                    <div key={`result-${result.id}-${index}`} className="grid-item">
                                                         <Link to={`/word/${result.id}`}>
                                                             <h3>{result.term}</h3>
                                                         </Link>
