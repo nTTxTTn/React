@@ -1,5 +1,10 @@
+/* App.css */
+
 .App {
   text-align: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 body {
@@ -13,20 +18,6 @@ body {
   background-color: black;
   color: red;
   padding: 10px;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px; /* 필요에 따라 조정 가능 */
-}
-
-.loading-message {
-  font-size: 1.2em;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
 }
 
 .search-bar {
@@ -50,6 +41,64 @@ body {
   color: white;
   padding: 5px 10px;
   cursor: pointer;
+}
+
+.logo {
+  height: 30px;
+  margin-right: 50px;
+  margin-left: 0;
+}
+
+.app-title {
+  color: white;
+  margin: 0 20px;
+}
+
+.content-wrapper {
+  padding: 0 20px;
+}
+
+.word-list-container {
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px;
+}
+
+.word-list-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.grid-item {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.grid-item h3 {
+  margin: 0;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.loading-message {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
 }
 
 .search-result {
@@ -79,58 +128,6 @@ body {
 
 .search-result-item p {
   color: #34495e;
-}
-
-.loading-message {
-  text-align: center;
-  font-size: 18px;
-  color: #666;
-}
-
-.logo {
-  height: 30px;
-  margin-right: 50px;
-  margin-left: 0;
-}
-
-.App {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.content-wrapper {
-  padding: 0 20px;
-}
-
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-
-.grid-item {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: center;
-}
-
-@media (max-width: 1200px) {
-  .grid-container {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  .grid-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .grid-container {
-    grid-template-columns: 1fr;
-  }
 }
 
 .App-logo {
@@ -165,5 +162,23 @@ body {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1200px) {
+  .grid-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .grid-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid-container {
+    grid-template-columns: 1fr;
   }
 }
