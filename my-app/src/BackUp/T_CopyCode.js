@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import logo from '../logo.svg';
+import '../ReactCSS/App.css';
 
 function App() {
     const [searchTerm, setSearchTerm] = useState('');
