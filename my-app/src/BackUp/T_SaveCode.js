@@ -4,9 +4,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { BrowserRouter as Router, Route, Link, Routes, useParams, useNavigate } from 'react-router-dom';
-import { fetchWords, fetchWordDetail } from './dummyAPI';  // 더미 API import
-import logo from './logo.svg';
-import './App.css';
+import { fetchWords, fetchWordDetail } from '../TestFile/dummyAPI';  // 더미 API import
+import logo from '../logo.svg';
+import '../ReactCSS/App.css';
 
 // 단어 상세 페이지 컴포넌트
 function WordDetail() {

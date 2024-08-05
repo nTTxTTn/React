@@ -1,0 +1,109 @@
+.word-list-detail {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.title-container {
+    background-color: #f0f0f0;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.word-list-detail-title {
+    font-size: 28px;
+    color: #333;
+    margin: 0;
+    text-align: center;
+}
+
+.back-button {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.word-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.word-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.word-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.word-button.primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.word-button.secondary {
+    background-color: #f44336;
+    color: white;
+}
+
+.word-button.edit {
+    background-color: #2196F3;
+    color: white;
+}
+
+.word-button.delete {
+    background-color: #f44336;
+    color: white;
+}
+
+.word-detail-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.word-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.word-detail-content {
+    flex: 1;
+}
+
+.word-detail-word {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.word-detail-definition {
+    color: #666;
+}
+
+.word-detail-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.no-words-message {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
