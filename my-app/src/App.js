@@ -598,7 +598,7 @@ function AppContent() {
     const [user, setUser] = useState(null);
     const [currentPage, setCurrentPage] = useState('');
 
-    const clientId = "260071461232-28kfnkfhca1r8do97pc3u93nup090k6q.apps.googleusercontent.com";
+    const clientId = "172316616931-sfe7kiedm3g94olfm1dtdebk4g4p59gr.apps.googleusercontent.com";
 
     const handleLogoClick = () => {
         navigate('/');
@@ -675,7 +675,7 @@ function AppContent() {
 function App() {
     return (
         <Router>
-            <GoogleOAuthProvider clientId="260071461232-28kfnkfhca1r8do97pc3u93nup090k6q.apps.googleusercontent.com">
+            <GoogleOAuthProvider clientId="172316616931-sfe7kiedm3g94olfm1dtdebk4g4p59gr.apps.googleusercontent.com">
                 <AppContent />
             </GoogleOAuthProvider>
         </Router>
