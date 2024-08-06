@@ -38,9 +38,12 @@
     padding: 5px;
 }
 
+/* Button/Solid/Primary
+
+<ul><li>중요한 행동에 사용합니다.</li><li>아이콘과 함께 사용할 수 있습니다.</li><li>가장 높은 시각 위계를 가집니다.</li><li>키워드: Button, Btn, 버튼, 솔리드 버튼, CTA, Call to Action, Primary</li></ul
 /* 주요 버튼 스타일 (퀴즈 시작, 다음 문제) */
 .start-quiz-btn, .next-question-btn {
-    background-color: #4CAF50;
+    background-color: #0066FF;
     color: white;
     padding: 10px 20px;
     border: none;
