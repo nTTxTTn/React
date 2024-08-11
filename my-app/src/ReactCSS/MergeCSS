@@ -1,0 +1,157 @@
+/* 전체 앱에 적용될 기본 스타일 */
+:root {
+  --primary-color: #4a90e2;
+  --secondary-color: #f0f4f8;
+  --text-color: #333;
+  --accent-color: #28a745;
+  --error-color: #dc3545;
+  --border-radius: 8px;
+  --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+body {
+  font-family: 'Noto Sans KR', Arial, sans-serif;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* 네비게이션 바 스타일 개선 */
+.nav-bar {
+  background-color: var(--primary-color);
+  padding: 1rem;
+}
+
+.nav-bar .logo {
+  height: 40px;
+  transition: transform 0.3s ease;
+}
+
+.nav-bar .logo:hover {
+  transform: scale(1.1);
+}
+
+.app-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* 버튼 스타일 통일 */
+.button, .action-button, .word-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  font-weight: bold;
+}
+
+.button:hover, .action-button:hover, .word-button:hover {
+  transform: translateY(-2px);
+}
+
+.button.primary, .action-button {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.button.secondary {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
+
+/* 카드 스타일 개선 */
+.card {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* 입력 필드 스타일 개선 */
+input[type="text"], input[type="password"], select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* 반응형 디자인 개선 */
+@media (max-width: 768px) {
+  .home-buttons, .word-list-grid {
+    flex-direction: column;
+  }
+
+  .button-box, .word-list-item-container {
+    width: 100%;
+  }
+}
+
+/* 애니메이션 효과 추가 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+/* 접근성 개선 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 폼 레이아웃 개선 */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* 에러 메시지 스타일 */
+.error-message {
+  color: var(--error-color);
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+/* 로딩 인디케이터 */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0,0,0,.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
