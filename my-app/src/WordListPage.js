@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 
 function WordListPage({ user }) {
     const [wordLists, setWordLists] = useState([]);
+    const [isGridView, setIsGridView] = useState(true);
+    const [showFavorites, setShowFavorites] = useState(false);  // 새로운 상태
 
     useEffect(() => {
         loadWordLists();
@@ -22,11 +24,63 @@ function WordListPage({ user }) {
         }
     };
 
+    const toggleView = () => {
+        setIsGridView(!isGridView);
+    };
+
+    const toggleFavorites = () => {
+        setShowFavorites(!showFavorites);
+    };
+
     return (
         <div className="word-list-page fade-in">
             <h2 className="page-title">내 단어장 목록</h2>
+            <div className="view-toggles">
+                <button onClick={toggleView} className={`toggle-button ${isGridView ? 'active' : ''}`}>
+                    {isGridView ? (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            그리드 뷰
+                        </>
+                    ) : (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            리스트 뷰
+                        </>
+                    )}
+                </button>
+                <button onClick={toggleFavorites} className={`toggle-button ${showFavorites ? 'active' : ''}`}>
+                    {showFavorites ? (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                            기능없는 버튼 상태 = 0
+                        </>
+                    ) : (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                            기능없는 버튼 상태 = 1
+                        </>
+                    )}
+                </button>
+            </div>
             {wordLists.length > 0 ? (
-                <div className="word-list-grid">
+                <div className={`word-list-container ${isGridView ? 'word-list-grid' : 'word-list-list'}`}>
                     {wordLists.map((list) => (
                         <div key={list.id} className="word-list-item-container">
                             <Link to={`/wordlist/${list.id}`} className="word-list-item">
