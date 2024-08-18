@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';  // axios import 추가
 
 function WordListPage({ user }) {
     const [wordLists, setWordLists] = useState([]);
     const [isGridView, setIsGridView] = useState(true);
-    const [showFavorites, setShowFavorites] = useState(false);  // 새로운 상태
+    const [showSecret, setShowSecret] = useState(0);  // 0: 비공개(secret=0), 1: 공개(secret=1)
 
     useEffect(() => {
         loadWordLists();
-    }, [user]);
+    }, [user, showSecret]);  // showSecret이 변경될 때마다 단어장 목록을 새로 불러옵니다.
 
-    const loadWordLists = () => {
-        const loadedLists = JSON.parse(localStorage.getItem('wordLists') || '[]');
-        const userLists = user ? loadedLists.filter(list => list.userId === user.sub) : loadedLists;
-        setWordLists(userLists);
+    const loadWordLists = async () => {
+        try {
+            const response = await axios.get('/api/vocalist', {
+                params: { secret: showSecret }
+            });
+            setWordLists(response.data);
+        } catch (error) {
+            console.error('단어장 목록을 불러오는 데 실패했습니다:', error);
+        }
     };
 
-    const deleteWordList = (id) => {
+    const deleteWordList = async (id) => {
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
-            const updatedLists = wordLists.filter(list => list.id !== id);
-            localStorage.setItem('wordLists', JSON.stringify(updatedLists));
-            setWordLists(updatedLists);
+            try {
+                await axios.delete(`/api/vocalist/${id}`);
+                loadWordLists();  // 삭제 후 목록을 다시 불러옵니다.
+            } catch (error) {
+                console.error('단어장 삭제에 실패했습니다:', error);
+            }
         }
     };
 
@@ -28,53 +37,31 @@ function WordListPage({ user }) {
         setIsGridView(!isGridView);
     };
 
-    const toggleFavorites = () => {
-        setShowFavorites(!showFavorites);
+    const toggleSecret = () => {
+        setShowSecret(prevState => prevState === 0 ? 1 : 0);
     };
 
     return (
         <div className="word-list-page fade-in">
-            <h2 className="page-title">내 단어장 목록</h2>
+            <h2 className="page-title">단어장 목록</h2>
             <div className="view-toggles">
                 <button onClick={toggleView} className={`toggle-button ${isGridView ? 'active' : ''}`}>
-                    {isGridView ? (
+                    {isGridView ? '그리드 뷰' : '리스트 뷰'}
+                </button>
+                <button onClick={toggleSecret} className={`toggle-button ${showSecret === 1 ? 'active' : ''}`}>
+                    {showSecret === 0 ? (
                         <>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                             </svg>
-                            그리드 뷰
+                            비공개 단어장 보기
                         </>
                     ) : (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="8" y1="6" x2="21" y2="6"></line>
-                                <line x1="8" y1="12" x2="21" y2="12"></line>
-                                <line x1="8" y1="18" x2="21" y2="18"></line>
-                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                            </svg>
-                            리스트 뷰
-                        </>
-                    )}
-                </button>
-                <button onClick={toggleFavorites} className={`toggle-button ${showFavorites ? 'active' : ''}`}>
-                    {showFavorites ? (
                         <>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                             </svg>
-                            기능없는 버튼 상태 = 0
-                        </>
-                    ) : (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                            기능없는 버튼 상태 = 1
+                            공개 단어장 보기
                         </>
                     )}
                 </button>
@@ -84,29 +71,29 @@ function WordListPage({ user }) {
                     {wordLists.map((list) => (
                         <div key={list.id} className="word-list-item-container">
                             <Link to={`/wordlist/${list.id}`} className="word-list-item">
-                                <h3 className="word-list-item-title">{list.name}</h3>
-                                <p className="word-list-item-count">{list.words.length} 단어</p>
+                                <h3 className="word-list-item-title">{list.title}</h3>
+                                <p className="word-list-item-count">{list.words ? list.words.length : 0} 단어</p>
                                 <div className="word-list-item-preview">
-                                    {list.words.slice(0, 3).map((word, index) => (
+                                    {list.words && list.words.slice(0, 3).map((word, index) => (
                                         <span key={index} className="preview-word">{word.word}</span>
                                     ))}
                                 </div>
                             </Link>
-                            <button
-                                onClick={() => deleteWordList(list.id)}
-                                className="delete-list-button"
-                                title="단어장 삭제"
-                            >
-                                🗑️
-                            </button>
+                            {user && user.email === list.author && (
+                                <button
+                                    onClick={() => deleteWordList(list.id)}
+                                    className="delete-list-button"
+                                    title="단어장 삭제"
+                                >
+                                    🗑️
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
             ) : (
                 <p className="no-lists-message">
-                    {user
-                        ? '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!'
-                        : '로그인하여 단어장을 만들어보세요!'}
+                    {showSecret === 0 ? '비공개 단어장이 없습니다.' : '공개된 단어장이 없습니다.'}
                 </p>
             )}
             {user && (

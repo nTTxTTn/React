@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function CreateWordList({ user }) {
     const [listName, setListName] = useState('');
     const [words, setWords] = useState([]);
     const [currentWord, setCurrentWord] = useState('');
     const [currentDefinition, setCurrentDefinition] = useState('');
+    const [isPublic, setIsPublic] = useState(false);  // 공개/비공개 상태를 관리하는 새로운 state
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -26,15 +28,26 @@ function CreateWordList({ user }) {
         setWords(words.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (listName && words.length > 0) {
-            const newWordList = { id: Date.now(), name: listName, words: words, userId: user.sub };
-            const existingLists = JSON.parse(localStorage.getItem('wordLists') || '[]');
-            const updatedLists = [...existingLists, newWordList];
-            localStorage.setItem('wordLists', JSON.stringify(updatedLists));
-            console.log('새 단어장 생성:', newWordList);
-            navigate('/words');
+            try {
+                const newWordList = {
+                    title: listName,
+                    words: words.map(w => ({ word: w.word, meaning: w.definition })),
+                    secret: isPublic ? 1 : 0  // isPublic이 true면 1(공개), false면 0(비공개)
+                };
+                const response = await axios.post('/api/vocalist', newWordList, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log('새 단어장 생성:', response.data);
+                navigate('/words');
+            } catch (error) {
+                console.error('단어장 생성 오류:', error);
+                alert('단어장 생성 중 오류가 발생했습니다.');
+            }
         } else {
             alert('단어장 이름을 입력하고 최소 한 개의 단어를 추가해주세요.');
         }
@@ -57,6 +70,16 @@ function CreateWordList({ user }) {
                         required
                         className="create-wordlist-input"
                     />
+                </div>
+                <div style={{border: '1px solid red', padding: '10px'}}>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={isPublic}
+                            onChange={(e) => setIsPublic(e.target.checked)}
+                        />
+                        공개 단어장으로 설정
+                    </label>
                 </div>
                 <div className="form-group">
                     <label>새 단어 추가</label>
