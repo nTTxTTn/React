@@ -35,7 +35,7 @@ function CreateWordList({ user }) {
                 const newWordList = {
                     title: listName,
                     words: words.map(w => ({ word: w.word, meaning: w.definition })),
-                    secret: isPublic ? 1 : 0  // isPublic이 true면 1(공개), false면 0(비공개)
+                    secret: isPublic ? 0 : 1  // isPublic이 true면 1(공개), false면 0(비공개)
                 };
                 const response = await axios.post('/api/vocalist', newWordList, {
                     headers: {
@@ -71,14 +71,15 @@ function CreateWordList({ user }) {
                         className="create-wordlist-input"
                     />
                 </div>
-                <div style={{border: '1px solid red', padding: '10px'}}>
-                    <label>
+                <div >
+                    <label className="checkbox-label">
                         <input
                             type="checkbox"
                             checked={isPublic}
                             onChange={(e) => setIsPublic(e.target.checked)}
+                            className="checkbox-input"
                         />
-                        공개 단어장으로 설정
+                        <span className="checkbox-text">공개 단어장으로 설정</span>
                     </label>
                 </div>
                 <div className="form-group">
