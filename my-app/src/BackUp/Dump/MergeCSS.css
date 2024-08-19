@@ -1,0 +1,1879 @@
+:root {
+    --sidebar-width: 220px;
+    --header-height: 60px;
+    --primary-color: #4a90e2;
+    --secondary-color: #f0f4f8;
+    --text-color: #333333;
+    --background-color: #ffffff;
+    --sidebar-background: #f8f9fa;
+    --sidebar-text-color: #495057;
+    --sidebar-hover-color: #e9ecef;
+    --border-color: #e0e0e0;
+    --primary-color-rgb: 74, 144, 226;
+    --box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+}
+
+.dark-mode {
+    --primary-color: #61dafb;
+    --secondary-color: #2c2c2c;
+    --text-color: #ffffff;
+    --background-color: #1a1a1a;
+    --sidebar-background: #2c2c2c;
+    --sidebar-text-color: #e0e0e0;
+    --sidebar-hover-color: #3c3c3c;
+    --border-color: #444444;
+    --primary-color-rgb: 97, 218, 251;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-background);
+    color: var(--sidebar-text-color);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    margin-bottom: 24px;
+}
+
+.app-title {
+    font-size: 18px;
+    color: var(--primary-color);
+    margin: 0;
+    font-weight: 600;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    color: var(--sidebar-text-color);
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.nav-item:hover, .nav-item.active {
+    background-color: var(--sidebar-hover-color);
+    color: var(--primary-color);
+}
+
+.nav-item svg {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--sidebar-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.theme-toggle:hover {
+    background-color: var(--sidebar-hover-color);
+}
+
+.theme-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+.card {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: var(--transition);
+}
+
+.button {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+input[type="text"], select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 12px;
+    }
+
+    .main-content {
+        width: 100%;
+        padding: 16px;
+    }
+
+    .nav-item {
+        padding: 10px;
+    }
+}
+
+/* 단어 목록 스타일 */
+.word-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.word-list-item {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 12px;
+    transition: var(--transition);
+}
+
+.word-list-item:hover {
+    box-shadow: var(--box-shadow);
+    transform: translateY(-2px);
+}
+
+/* 퀴즈 페이지 스타일 */
+.quiz-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.quiz-progress {
+    margin-bottom: 16px;
+}
+
+.quiz-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.quiz-option {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quiz-option:hover {
+    background-color: var(--secondary-color);
+}
+
+.quiz-option.selected {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+}
+
+/* 페이지 타이틀 스타일 */
+.page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+/* 사용자 정보 스타일 */
+.user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.sidebar-header {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.logo-container {
+    display: inline-block;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    fill: var(--background-color);
+}
+
+.app-title {
+    font-size: 20px;
+    color: var(--text-color);
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.home-page {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.page-description {
+    color: var(--text-color);
+    margin-bottom: 30px;
+}
+
+.home-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.home-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.home-button:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow);
+}
+
+.home-button svg {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+/* WordListPage 스타일 */
+.word-list-page {
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;}
+
+.word-list-page {
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle-btn,
+.create-list-btn {
+    padding: 8px 12px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.view-toggle-btn:hover,
+.create-list-btn:hover {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+}
+
+.word-list-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.word-list-container.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.word-list-container.list-view {
+    flex-direction: column;
+}
+
+.word-list-item {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    transition: var(--transition);
+    position: relative;
+}
+
+.word-list-item:hover {
+    box-shadow: var(--box-shadow);
+}
+
+.word-list-link {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.word-list-title {
+    font-size: 18px;
+    margin-bottom: 5px;
+    color: var(--primary-color);
+}
+
+.word-list-count {
+    font-size: 14px;
+    color: var(--light-text-color);
+    margin-bottom: 10px;
+}
+
+.word-list-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.preview-word {
+    background-color: var(--secondary-color);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.delete-list-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--light-text-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.delete-list-btn:hover {
+    color: var(--error-color);
+}
+
+.no-lists-message {
+    text-align: center;
+    margin-top: 40px;
+    color: var(--light-text-color);
+}
+
+/* 리스트 뷰 특정 스타일 */
+.word-list-container.list-view .word-list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+.word-list-container.list-view .word-list-link {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.word-list-container.list-view .word-list-title {
+    margin-bottom: 0;
+    margin-right: 15px;
+}
+
+.word-list-container.list-view .word-list-count {
+    margin-bottom: 0;
+    margin-right: 15px;
+}
+
+.word-list-container.list-view .word-list-preview {
+    flex-grow: 1;
+}
+
+.word-list-container.list-view .delete-list-btn {
+    position: static;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-actions {
+        margin-top: 10px;
+    }
+
+    .word-list-container.list-view .word-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .word-list-container.list-view .word-list-link {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .word-list-container.list-view .word-list-title,
+    .word-list-container.list-view .word-list-count {
+        margin-bottom: 5px;
+    }
+
+    .word-list-container.list-view .delete-list-btn {
+        margin-top: 10px;
+    }
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.app-body {
+    display: flex;
+    flex: 1;
+}
+
+.sidebar {
+    width: 200px;
+    background-color: var(--sidebar-background);
+    padding: 20px;
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+}
+
+.login-button {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.user-name {
+    font-weight: bold;
+}
+
+.logout-btn {
+    padding: 5px 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    opacity: 0.9;
+}
+
+/* 반응형 디자인을 위한 미디어 쿼리 */
+@media (max-width: 768px) {
+    .app-body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .main-content {
+        padding: 10px;
+    }
+}
+.sidebar-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.logo-container {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    fill: var(--background-color);
+}
+
+.app-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-color);
+    margin: 0;
+}
+.home-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.home-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    color: var(--text-color);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.home-button:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow);
+}
+
+.home-button svg {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.home-button span {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* CreateWordList 스타일 */
+.create-wordlist {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.wordlist-form {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--box-shadow);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.word-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.word-input-group input {
+    flex: 1;
+}
+
+.add-word-btn, .remove-word-btn, .save-wordlist-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-word-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.remove-word-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.save-wordlist-btn {
+    background-color: var(--success-color);
+    color: white;
+    font-size: 16px;
+    padding: 12px 20px;
+    margin-top: 20px;
+}
+
+.word-list {
+    margin-top: 30px;
+}
+
+.word-list h2 {
+    margin-bottom: 15px;
+}
+
+.word-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.word-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--secondary-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+}
+
+.word-text, .word-definition {
+    flex: 1;
+}
+
+.word-text {
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .word-input-group {
+        flex-direction: column;
+    }
+
+    .word-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .remove-word-btn {
+        margin-top: 10px;
+    }
+}
+/* CreateWordList 스타일 */
+.create-wordlist {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.wordlist-form {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--box-shadow);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.word-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.word-input-group input {
+    flex: 1;
+}
+
+.add-word-btn, .remove-word-btn, .create-wordlist-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-word-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.remove-word-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.create-wordlist-btn {
+    background-color: var(--success-color);
+    color: white;
+    font-size: 16px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.word-list {
+    margin-top: 30px;
+}
+
+.word-list h2 {
+    margin-bottom: 15px;
+}
+
+.word-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.word-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+}
+
+.word-text, .word-definition {
+    flex: 1;
+}
+
+.word-text {
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .word-input-group {
+        flex-direction: column;
+    }
+
+    .word-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .remove-word-btn {
+        margin-top: 10px;
+    }
+}
+/* CreateWordList 스타일 */
+.create-wordlist {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.wordlist-form {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--box-shadow);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.listname-input {
+    width: 100%;
+    max-width: 400px; /* 단어장 이름 입력 칸 길이 제한 */
+}
+
+.word-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.word-input-group input {
+    flex: 1;
+}
+
+.add-word-btn, .remove-word-btn, .create-wordlist-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-word-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.remove-word-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.create-wordlist-btn {
+    background-color: var(--success-color);
+    color: white;
+    font-size: 16px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.word-list {
+    margin-top: 30px;
+}
+
+.word-list h2 {
+    margin-bottom: 15px;
+}
+
+.word-list-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px;
+    gap: 10px;
+    padding: 10px;
+    background-color: var(--secondary-color);
+    font-weight: bold;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.word-list ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.word-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.word-item:last-child {
+    border-bottom: none;
+}
+
+.word-text, .word-definition {
+    padding: 5px;
+    background-color: var(--secondary-color);
+    border-radius: var(--border-radius);
+}
+
+@media (max-width: 600px) {
+    .word-input-group {
+        flex-direction: column;
+    }
+
+    .word-list-header, .word-item {
+        grid-template-columns: 1fr 1fr 40px;
+    }
+
+    .remove-word-btn {
+        padding: 5px;
+    }
+}
+/* CreateWordList 스타일 */
+.create-wordlist {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.wordlist-form {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--box-shadow);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.listname-input {
+    width: 100%;
+    max-width: 400px;
+}
+
+.word-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.word-input-group input {
+    flex: 1;
+}
+
+.add-word-btn, .remove-word-btn, .create-wordlist-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-word-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.remove-word-btn {
+    background-color: #ff4d4d; /* 빨간색으로 변경 */
+    color: white;
+}
+
+.create-wordlist-btn {
+    background-color: var(--success-color);
+    color: white;
+    font-size: 16px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.word-list {
+    margin-top: 30px;
+}
+
+.word-list h2 {
+    margin-bottom: 15px;
+}
+
+.word-list-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px;
+    gap: 10px;
+    padding: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.word-list ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.word-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.word-item:nth-child(even) {
+    background-color: rgba(var(--primary-color-rgb), 0.05); /* 연한 주 색상 */
+}
+
+.word-item:last-child {
+    border-bottom: none;
+}
+
+.word-text, .word-definition {
+    padding: 5px;
+    background-color: rgba(var(--primary-color-rgb), 0.1); /* 연한 주 색상 */
+    border-radius: var(--border-radius);
+}
+
+@media (max-width: 600px) {
+    .word-input-group {
+        flex-direction: column;
+    }
+
+    .word-list-header, .word-item {
+        grid-template-columns: 1fr 1fr 40px;
+    }
+
+    .remove-word-btn {
+        padding: 5px;
+    }
+}
+
+.create-wordlist-btn {
+    background-color: var(--success-color);
+    color: white;
+    font-size: 16px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    width: 100%;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.create-wordlist-btn:hover {
+    background-color: var(--success-color-dark);
+}
+
+/* CreateWordList 스타일 */
+.create-wordlist {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.wordlist-form {
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--box-shadow);
+}
+
+/* ... 다른 스타일들 ... */
+
+.create-wordlist-btn {
+    background-color: var(--success-color, #4caf50);  /* 폴백 색상 추가 */
+    color: white;
+    font-size: 16px;
+    padding: 12px 20px;
+    margin-top: 20px;
+    width: 100%;
+    border: none;
+    border-radius: var(--border-radius, 4px);  /* 폴백 값 추가 */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;  /* 버튼이 블록 레벨 요소로 표시되도록 함 */
+}
+
+.create-wordlist-btn:hover {
+    background-color: var(--success-color-dark, #45a049);  /* 폴백 색상 추가 */
+}
+.sidebar-header {
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-header:hover {
+    opacity: 0.8;
+}
+
+.logo-container {
+    /* 기존 스타일 유지 */
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header:hover .logo-container {
+    transform: scale(1.05);
+}
+/* 기존 스타일에 추가 */
+
+.flashcard-view {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.flashcard {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 40px;
+    margin: 20px 0;
+    cursor: pointer;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.flashcard:hover {
+    transform: scale(1.02);
+}
+
+.flashcard .word {
+    font-weight: bold;
+}
+
+.flashcard .definition {
+    font-style: italic;
+}
+
+.flashcard-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.flashcard-controls button {
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.flashcard-controls button:hover:not(:disabled) {
+    background-color: var(--primary-color-dark);
+}
+
+.flashcard-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.progress {
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+/* 기존 스타일에 추가 또는 수정 */
+
+.flashcard-view {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.flashcard {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 40px;
+    margin: 20px 0;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.flashcard .word {
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.flashcard .definition {
+    font-style: italic;
+    color: var(--primary-color);
+}
+
+.flashcard-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.flashcard-controls button {
+    padding: 10px 20px;
+    margin: 5px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.flashcard-controls button:hover:not(:disabled) {
+    background-color: var(--primary-color-dark);
+}
+
+.flashcard-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ox-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.correct-btn {
+    background-color: var(--success-color);
+}
+
+.incorrect-btn {
+    background-color: var(--error-color);
+}
+
+.previous-btn, .restart-btn {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.progress {
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+@media (max-width: 600px) {
+    .flashcard-controls {
+        flex-direction: column;
+    }
+
+    .ox-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .flashcard-controls button {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+/* WordListPage 스타일 */
+.word-list-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle-btn, .create-list-btn {
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.view-toggle-btn:hover, .create-list-btn:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.word-list-container {
+    display: grid;
+    gap: 20px;
+}
+
+.word-list-container.grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.word-list-container.list-view {
+    grid-template-columns: 1fr;
+}
+
+.word-list-item {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    transition: box-shadow 0.3s ease;
+}
+
+.word-list-item:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.word-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.word-list-title {
+    font-size: 18px;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+.word-list-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.flashcard-link, .delete-list-btn {
+    padding: 5px 10px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+}
+
+.flashcard-link:hover, .delete-list-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.word-management {
+    margin-top: 30px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+}
+
+.word-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.word-form input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.word-form button {
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+.word-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.word-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.word-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.word-actions button {
+    padding: 5px 10px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+.no-lists-message {
+    text-align: center;
+    color: var(--light-text-color);
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-actions {
+        margin-top: 10px;
+    }
+
+    .word-form {
+        flex-direction: column;
+    }
+}
+/* WordListPage 스타일 */
+.word-list-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle-btn, .create-list-btn {
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.view-toggle-btn:hover, .create-list-btn:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.word-list-container {
+    display: grid;
+    gap: 20px;
+}
+
+.word-list-container.grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.word-list-container.list-view {
+    grid-template-columns: 1fr;
+}
+
+.word-list-item {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    transition: box-shadow 0.3s ease;
+}
+
+.word-list-item:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.word-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.word-list-title {
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+.word-list-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.flashcard-link, .delete-list-btn {
+    padding: 5px 10px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.flashcard-link:hover, .delete-list-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.word-list-count {
+    color: var(--light-text-color);
+    font-size: 14px;
+}
+
+.no-lists-message {
+    text-align: center;
+    color: var(--light-text-color);
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-actions {
+        margin-top: 10px;
+    }
+}
+/* WordListPage 스타일 */
+.word-list-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-title {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle-btn, .create-list-btn {
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.view-toggle-btn:hover, .create-list-btn:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.word-list-container {
+    display: grid;
+    gap: 20px;
+}
+
+.word-list-container.grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.word-list-container.list-view {
+    grid-template-columns: 1fr;
+}
+
+.word-list-item {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    transition: box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.word-list-item:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.word-list-content {
+    margin-bottom: 15px;
+}
+
+.word-list-title {
+    font-size: 20px;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.word-list-count {
+    color: var(--light-text-color);
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.word-list-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.preview-word {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.word-list-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 8px 12px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.flashcard-link {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.edit-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.delete-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.no-lists-message {
+    text-align: center;
+    color: var(--light-text-color);
+    margin-top: 40px;
+    font-size: 18px;
+}
+
+/* 리스트 뷰 특정 스타일 */
+.word-list-container.list-view .word-list-item {
+    flex-direction: row;
+    align-items: center;
+}
+
+.word-list-container.list-view .word-list-content {
+    flex: 1;
+    margin-bottom: 0;
+    margin-right: 20px;
+}
+
+.word-list-container.list-view .word-list-actions {
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-actions {
+        margin-top: 15px;
+    }
+
+    .word-list-container.list-view .word-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .word-list-container.list-view .word-list-content {
+        margin-bottom: 15px;
+        margin-right: 0;
+    }
+
+    .word-list-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+.view-toggle-btn:hover, .create-list-btn:hover, .action-btn:hover {
+    opacity: 0.9;
+    background-color: inherit; /* 배경색 변경 제거 */
+}
+
+/* 단어장 아이템 hover 효과 수정 */
+.word-list-item:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* 배경색 변경 제거 */
+}
+
+/* 액션 버튼 hover 효과 수정 */
+.flashcard-link:hover, .edit-btn:hover, .delete-btn:hover {
+    opacity: 0.9;
+    /* 배경색과 텍스트 색상 변경 제거 */
+}
+
+/* 추가적인 hover 효과가 있는 요소들에 대해 같은 방식으로 수정 */
+/* 예: */
+.some-element:hover {
+    /* 배경색 변경 대신 다른 효과 사용 */
+    transform: translateY(-2px);
+    transition: transform 0.3s ease;
+}
+
+/* 전역 스타일 추가 */
+* {
+    transition: none; /* 전역 전환 효과 제거 */
+}
+
+/* 특정 요소에 대해 전환 효과를 유지하고 싶다면 개별적으로 지정 */
+.specific-element {
+    transition: opacity 0.3s ease;
+}

@@ -1,0 +1,59 @@
+.login-button {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 5px 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.user-name {
+    font-weight: bold;
+    margin-right: 10px;
+    color: var(--text-color);
+}
+
+.logout-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: var(--primary-color-dark);
+}
+
+/* Google 로그인 버튼 스타일 커스터마이징 */
+.google-login-button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px !important;
+    border-radius: 20px !important;
+    background-color: #4285F4 !important;
+    color: white !important;
+    font-weight: bold !important;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.google-login-button:hover {
+    background-color: #3367D6 !important;
+}

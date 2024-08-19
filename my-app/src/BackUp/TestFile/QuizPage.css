@@ -1,0 +1,300 @@
+/* 전체 퀴즈 페이지 레이아웃 */
+.quiz-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 퀴즈 설정 섹션 스타일 */
+.quiz-setup {
+    background-color: #f0f0f0;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* 단어장 선택 영역 레이아웃 */
+.wordlist-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* 개별 단어장 아이템 스타일 */
+.wordlist-item {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 퀴즈 길이 선택 영역 스타일 */
+.quiz-length-selection {
+    margin: 20px 0;
+}
+
+.quiz-length-selection select {
+    margin-left: 10px;
+    padding: 5px;
+}
+
+/* 주요 버튼 스타일 (퀴즈 시작, 다음 문제) */
+.start-quiz-btn, .next-question-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.start-quiz-btn:hover, .next-question-btn:hover {
+    background-color: #45a049;
+}
+
+/* 퀴즈 섹션 스타일 */
+.quiz-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 문제 번호 표시 스타일 */
+.question-number {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+/* 문제 안내 텍스트 스타일 */
+.question-prompt {
+    font-size: 18px;
+    color: #333;
+}
+
+/* 퀴즈 단어 스타일 */
+.quiz-word {
+    font-size: 24px;
+    color: #2196F3;
+    margin-bottom: 20px;
+}
+
+/* 선택지 레이아웃 */
+.options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* 선택지 버튼 기본 스타일 */
+.option-btn {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.option-btn:hover {
+    background-color: #e0e0e0;
+}
+
+/* 선택된 답변 스타일 */
+.option-btn.selected {
+    background-color: #2196F3;
+    color: white;
+}
+
+/* 정답 스타일 */
+.option-btn.correct {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* 오답 스타일 */
+.option-btn.incorrect {
+    background-color: #f44336;
+    color: white;
+}
+
+/* 결과 섹션 스타일 */
+.result-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* 정답 메시지 스타일 */
+.correct-answer {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* 오답 메시지 스타일 */
+.incorrect-answer {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* 점수 표시 스타일 */
+.score {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* 퀴즈 종료 버튼 스타일 */
+.quit-quiz-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.quit-quiz-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* 퀴즈 종료 버튼 스타일 */
+.end-quiz-btn {
+    background-color: #2196F3;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.end-quiz-btn:hover {
+    background-color: #1976D2;
+}
+.quiz-progress {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease;
+}
+.quiz-setup {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quiz-setup h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.setup-container {
+    display: flex;
+    gap: 20px;
+}
+
+.wordlist-selection, .quiz-options {
+    flex: 1;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.wordlist-selection h3, .quiz-options h3 {
+    margin-top: 0;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.wordlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.wordlist-item {
+    background-color: #e9e9e9;
+    padding: 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.wordlist-item.selected {
+    background-color: #d4edda;
+}
+
+.wordlist-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.wordlist-item label {
+    flex: 1;
+    cursor: pointer;
+}
+
+.word-count {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+}
+
+.quiz-length-selection {
+    margin-bottom: 15px;
+}
+
+.quiz-length-selection label {
+    margin-right: 10px;
+}
+
+.quiz-length-selection select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.start-quiz-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+}
+
+.start-quiz-btn:hover {
+    background-color: #45a049;
+}

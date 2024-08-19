@@ -1,0 +1,47 @@
+.home-page {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.page-description {
+    color: var(--text-color);
+    margin-bottom: 30px;
+}
+
+.home-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.home-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    color: var(--text-color);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.home-button:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow);
+}
+
+.home-button svg {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.home-button span {
+    font-size: 16px;
+    font-weight: bold;
+}
