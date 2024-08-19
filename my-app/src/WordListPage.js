@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp } from '@fortawesome/free-solid-svg-icons';
+import './WordListPage.css';
 
 function WordListPage({ user }) {
     const [wordLists, setWordLists] = useState([]);
     const [isGridView, setIsGridView] = useState(true);
-    const [showFavorites, setShowFavorites] = useState(false);  // 새로운 상태
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOrder, setSortOrder] = useState('asc');
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadWordLists();
@@ -24,97 +29,81 @@ function WordListPage({ user }) {
         }
     };
 
-    const toggleView = () => {
-        setIsGridView(!isGridView);
+    const editWordList = (id) => {
+        navigate(`/edit-wordlist/${id}`);
     };
 
-    const toggleFavorites = () => {
-        setShowFavorites(!showFavorites);
-    };
+    const filteredLists = wordLists
+        .filter(list => list.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            if (sortOrder === 'asc') {
+                return a.name.localeCompare(b.name);
+            } else {
+                return b.name.localeCompare(a.name);
+            }
+        });
 
     return (
-        <div className="word-list-page fade-in">
-            <h2 className="page-title">내 단어장 목록</h2>
-            <div className="view-toggles">
-                <button onClick={toggleView} className={`toggle-button ${isGridView ? 'active' : ''}`}>
-                    {isGridView ? (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                            그리드 뷰
-                        </>
-                    ) : (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="8" y1="6" x2="21" y2="6"></line>
-                                <line x1="8" y1="12" x2="21" y2="12"></line>
-                                <line x1="8" y1="18" x2="21" y2="18"></line>
-                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                            </svg>
-                            리스트 뷰
-                        </>
-                    )}
-                </button>
-                <button onClick={toggleFavorites} className={`toggle-button ${showFavorites ? 'active' : ''}`}>
-                    {showFavorites ? (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                            기능없는 버튼 상태 = 0
-                        </>
-                    ) : (
-                        <>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                            기능없는 버튼 상태 = 1
-                        </>
-                    )}
-                </button>
+        <div className="word-list-page">
+            <div className="page-header">
+                <h1 className="page-title">내 단어장 목록</h1>
+                <div className="search-bar">
+                    <FontAwesomeIcon icon={faSearch} className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="     단어장 검색..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="search-input"
+                    />
+                </div>
+                <div className="page-actions">
+                    <button onClick={() => setIsGridView(!isGridView)} className="view-toggle-btn" title={isGridView ? "리스트 뷰로 전환" : "그리드 뷰로 전환"}>
+                        <FontAwesomeIcon icon={isGridView ? faList : faThLarge} />
+                    </button>
+                    <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="sort-btn" title="정렬 순서 변경">
+                        <FontAwesomeIcon icon={sortOrder === 'asc' ? faSortAlphaDown : faSortAlphaUp} />
+                    </button>
+                    <Link to="/create-wordlist" className="create-list-btn">
+                        <FontAwesomeIcon icon={faPlus} /> 새 단어장 만들기
+                    </Link>
+                </div>
             </div>
-            {wordLists.length > 0 ? (
-                <div className={`word-list-container ${isGridView ? 'word-list-grid' : 'word-list-list'}`}>
-                    {wordLists.map((list) => (
-                        <div key={list.id} className="word-list-item-container">
-                            <Link to={`/wordlist/${list.id}`} className="word-list-item">
-                                <h3 className="word-list-item-title">{list.name}</h3>
-                                <p className="word-list-item-count">{list.words.length} 단어</p>
-                                <div className="word-list-item-preview">
+            <div className={`word-list-container ${isGridView ? 'grid-view' : 'list-view'}`}>
+                {filteredLists.map((list) => (
+                    <div key={list.id} className="word-list-item">
+                        <div className="word-list-content">
+                            <h3 className="word-list-title">{list.name}</h3>
+                            <p className="word-list-count">{list.words.length} 단어</p>
+                            {isGridView && (
+                                <div className="word-list-preview">
                                     {list.words.slice(0, 3).map((word, index) => (
                                         <span key={index} className="preview-word">{word.word}</span>
                                     ))}
                                 </div>
+                            )}
+                        </div>
+                        <div className="word-list-actions">
+                            <Link to={`/flashcard/${list.id}`} className="action-btn flashcard-link" title="학습하기">
+                                <FontAwesomeIcon icon={faPlay} />
+                                <span className="tooltip">학습하기</span>
                             </Link>
-                            <button
-                                onClick={() => deleteWordList(list.id)}
-                                className="delete-list-button"
-                                title="단어장 삭제"
-                            >
-                                🗑️
+                            <button onClick={() => editWordList(list.id)} className="action-btn edit-btn" title="수정하기">
+                                <FontAwesomeIcon icon={faEdit} />
+                                <span className="tooltip">수정하기</span>
+                            </button>
+                            <button onClick={() => deleteWordList(list.id)} className="action-btn delete-btn" title="삭제하기">
+                                <FontAwesomeIcon icon={faTrash} />
+                                <span className="tooltip">삭제하기</span>
                             </button>
                         </div>
-                    ))}
-                </div>
-            ) : (
+                    </div>
+                ))}
+            </div>
+            {filteredLists.length === 0 && (
                 <p className="no-lists-message">
-                    {user
-                        ? '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!'
-                        : '로그인하여 단어장을 만들어보세요!'}
+                    {searchTerm ? '검색 결과가 없습니다.' : (user ? '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!' : '로그인하여 단어장을 만들어보세요!')}
                 </p>
-            )}
-            {user && (
-                <div className="word-list-actions">
-                    <Link to="/create-wordlist" className="button create-list-button">
-                        새 단어장 만들기
-                    </Link>
-                </div>
             )}
         </div>
     );

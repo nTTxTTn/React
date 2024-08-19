@@ -1,0 +1,250 @@
+.word-list-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.page-title {
+    font-size: 24px;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.search-bar {
+    position: relative;
+    flex-grow: 1;
+    max-width: 300px;
+    margin: 0 20px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--light-text-color);
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle-btn, .sort-btn, .create-list-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-toggle-btn, .sort-btn {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.create-list-btn {
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+}
+
+.word-list-container {
+    display: grid;
+    gap: 20px;
+}
+
+.word-list-container.grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.word-list-container.list-view {
+    grid-template-columns: 1fr;
+}
+
+.word-list-item {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.word-list-item:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+}
+
+.word-list-title {
+    font-size: 18px;
+    color: var(--primary-color);
+    margin: 0 0 10px 0;
+}
+
+.word-list-count {
+    color: var(--light-text-color);
+    font-size: 14px;
+    margin: 0 0 10px 0;
+}
+
+.word-list-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.preview-word {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.word-list-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.action-btn {
+    padding: 8px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.flashcard-link {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.edit-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.delete-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.no-lists-message {
+    text-align: center;
+    color: var(--light-text-color);
+    margin-top: 40px;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-bar {
+        margin: 20px 0;
+        max-width: none;
+    }
+
+    .page-actions {
+        justify-content: space-between;
+    }
+
+    .word-list-container.grid-view {
+        grid-template-columns: 1fr;
+    }
+}
+
+.word-list-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.action-btn {
+    padding: 8px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    position: relative;
+}
+
+.flashcard-link {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.edit-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.delete-btn {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.action-btn .tooltip {
+    visibility: hidden;
+    width: 80px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -40px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+
+.action-btn .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+.action-btn:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
