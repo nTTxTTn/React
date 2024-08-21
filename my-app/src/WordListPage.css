@@ -248,3 +248,47 @@
     visibility: visible;
     opacity: 1;
 }
+.toggle-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.toggle-button:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.toggle-button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.toggle-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.toggle-button.active svg {
+    fill: white;
+}
+
+@media (max-width: 768px) {
+    .page-actions {
+        flex-wrap: wrap;
+    }
+
+    .toggle-button {
+        flex: 1 0 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+}

@@ -1,100 +1,138 @@
 .create-wordlist {
-    max-width: 800px;
+    max-width: 600px;
     margin: 0 auto;
     padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-.wordlist-form {
-    background-color: var(--background-color);
-    border-radius: var(--border-radius);
-    padding: 20px;
-    box-shadow: var(--box-shadow);
-}
-
-.form-group {
+.create-wordlist-title {
+    text-align: center;
+    color: #333;
     margin-bottom: 20px;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+.create-wordlist-form {
+    display: flex;
+    flex-direction: column;
 }
 
-.listname-input {
+.form-group {
+    margin-bottom: 15px;
+}
+
+.create-wordlist-input {
     width: 100%;
-    max-width: 400px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
 }
 
-.word-input-group {
+.word-input-container {
     display: flex;
     gap: 10px;
 }
 
-.word-input-group input {
+.word-input-container input {
     flex: 1;
 }
 
-.word-list {
-    margin-top: 30px;
-}
-
-.word-list-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr 80px;
-    gap: 10px;
-    padding: 10px;
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: bold;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-}
-
-.word-list ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    border: 1px solid var(--border-color);
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-}
-
-.word-item {
-    display: grid;
-    grid-template-columns: 1fr 1fr 80px;
-    gap: 10px;
-    align-items: center;
-    padding: 10px;
-    background-color: var(--background-color);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.word-item:nth-child(even) {
-    background-color: rgba(var(--primary-color-rgb), 0.05);
-}
-
-.word-item:last-child {
-    border-bottom: none;
-}
-
-.word-text, .word-definition {
-    padding: 5px;
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-    border-radius: var(--border-radius);
-}
-
-.create-wordlist-btn {
-    background-color: var(--success-color);
-    color: white;
-    font-size: 16px;
-    padding: 12px 20px;
-    margin-top: 20px;
-    width: 100%;
+.button {
+    padding: 10px 15px;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 16px;
     transition: background-color 0.3s ease;
 }
 
-.create-wordlist-btn:hover {
-    background-color: var(--success-color-dark);
+.add-word-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.add-word-btn:hover {
+    background-color: #218838;
+}
+
+.remove-word-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.remove-word-btn:hover {
+    background-color: #c82333;
+}
+
+.word-list-container {
+    margin-top: 20px;
+}
+
+.word-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.word-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.word-text, .word-definition {
+    flex: 1;
+}
+
+.submit-button {
+    background-color: #007bff;
+    color: white;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
+}
+
+/* 새로 추가된 공개/비공개 체크박스 스타일 */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.checkbox-input {
+    margin-right: 10px;
+}
+
+.checkbox-text {
+    font-size: 16px;
+    color: #333;
+}
+
+/* 반응형 디자인을 위한 미디어 쿼리 */
+@media (max-width: 480px) {
+    .create-wordlist {
+        padding: 15px;
+    }
+
+    .word-input-container {
+        flex-direction: column;
+    }
+
+    .word-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .remove-word-btn {
+        margin-top: 10px;
+    }
 }
