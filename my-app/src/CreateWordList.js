@@ -38,7 +38,7 @@ function CreateWordList({ user }) {
                     words: words.map(w => ({ word: w.word, meaning: w.definition })),
                     secret: isPublic ? 0 : 1
                 };
-                const response = await axios.post('http:///api/vocalist', newWordList, {
+                const response = await axios.post('http://52.79.241.189:8080/api/vocalist', newWordList, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
