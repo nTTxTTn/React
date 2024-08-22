@@ -30,7 +30,7 @@ function App() {
     return (
         <ThemeProvider>
             <Router>
-                <GoogleOAuthProvider clientId="3876558866-ovsd73gbk2fua6ui6jcf0orfaps6hb96.apps.googleusercontent.com">
+                <GoogleOAuthProvider clientId="260071461232-28kfnkfhca1r8do97pc3u93nup090k6q.apps.googleusercontent.com">
                     <div className="app-container">
                         <header className="app-header">
                             <div className="login-container">
