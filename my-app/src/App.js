@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ThemeProvider } from './ThemeContext';
 import Sidebar from './Sidebar';
-import AppContent from './AppContent';
 import LoginButton from './LoginButton';
+import WordListPage from './WordListPage';
+import HomePage from './HomePage';
 import './App.css';
 
 // Axios 인스턴스 생성
 const api = axios.create({
-    baseURL: 'http://ec2-52-79-241-189.ap-northeast-2.compute.amazonaws.com:8080',
+    baseURL: process.env.REACT_APP_API_BASE_URL,
     withCredentials: true
 });
 
@@ -39,21 +41,27 @@ function App() {
     };
 
     return (
-        <ThemeProvider>
-            <Router>
-                <div className="app-container">
-                    <header className="app-header">
-                        <LoginButton user={user} onLogin={setUser} onLogout={handleLogout} api={api} />
-                    </header>
-                    <div className="app-body">
-                        <Sidebar user={user} />
-                        <main className="main-content">
-                            <AppContent user={user} />
-                        </main>
+        <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+            <ThemeProvider>
+                <Router>
+                    <div className="app-container">
+                        <header className="app-header">
+                            <LoginButton user={user} onLogin={setUser} onLogout={handleLogout} api={api} />
+                        </header>
+                        <div className="app-body">
+                            <Sidebar user={user} />
+                            <main className="main-content">
+                                <Routes>
+                                    <Route path="/" element={<HomePage user={user} />} />
+                                    <Route path="/words" element={<WordListPage user={user} api={api} />} />
+                                    {/* 다른 라우트들 추가 */}
+                                </Routes>
+                            </main>
+                        </div>
                     </div>
-                </div>
-            </Router>
-        </ThemeProvider>
+                </Router>
+            </ThemeProvider>
+        </GoogleOAuthProvider>
     );
 }
 

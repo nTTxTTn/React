@@ -1,80 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import axios from 'axios';
+import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp } from '@fortawesome/free-solid-svg-icons';
 import './WordListPage.css';
 
-function WordListPage({ user }) {
+function WordListPage({ user, api }) {
     const [wordLists, setWordLists] = useState([]);
-    const [publicLists, setPublicLists] = useState([]);
     const [isGridView, setIsGridView] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
-    const [showPrivate, setShowPrivate] = useState(false);
-    const navigate = useNavigate();
+    const [showPublicLists, setShowPublicLists] = useState(false);
 
     useEffect(() => {
         if (user) {
-            loadWordLists();
-            loadPublicLists();
+            fetchWordLists();
         }
-    }, [user]);
+    }, [user, showPublicLists]);
 
-    const loadWordLists = async () => {
+    const fetchWordLists = async () => {
         try {
-            const response = await axios.get('/api/vocalist');
+            const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
+            const response = await api.get(endpoint);
             setWordLists(response.data);
         } catch (error) {
-            console.error('단어장 목록을 불러오는 중 오류가 발생했습니다:', error);
+            console.error('Failed to fetch word lists:', error);
         }
     };
 
-    const loadPublicLists = async () => {
-        try {
-            const response = await axios.get('/api/vocalist');
-            setPublicLists(response.data.filter(list => list.secret === 1 && list.author !== user.email));
-        } catch (error) {
-            console.error('공개 단어장 목록을 불러오는 중 오류가 발생했습니다:', error);
-        }
+    const togglePublicLists = () => {
+        setShowPublicLists(!showPublicLists);
     };
 
-    const deleteWordList = async (id) => {
+    const deleteWordList = async (id, author) => {
+        if (user.email !== author) {
+            alert("단어장의 소유자만 삭제할 수 있습니다.");
+            return;
+        }
+
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
             try {
-                await axios.delete(`/api/uservocalist/delete/${id}`);
-                loadWordLists();
-                loadPublicLists();
+                await api.delete(`/api/uservocalist/delete/${id}`);
+                fetchWordLists(); // 목록 새로고침
             } catch (error) {
-                console.error('단어장 삭제 중 오류가 발생했습니다:', error);
+                console.error('Failed to delete word list:', error);
+                alert('단어장 삭제에 실패했습니다.');
             }
         }
     };
 
-    const editWordList = (id) => {
-        navigate(`/edit-wordlist/${id}`);
-    };
-
-    const togglePrivate = () => {
-        setShowPrivate(!showPrivate);
-    };
-
-    const toggleWordListSecret = async (id, currentSecret) => {
-        const newSecret = currentSecret === 1 ? 0 : 1;
-        try {
-            await axios.get(`/api/vocalist/${id}/editsecret/${newSecret === 1 ? 'open' : 'close'}`);
-            loadWordLists();
-            loadPublicLists();
-        } catch (error) {
-            console.error('단어장 공개/비공개 설정 변경 중 오류가 발생했습니다:', error);
-        }
-    };
-
-    const filteredLists = showPrivate
-        ? wordLists.filter(list => list.secret === 0 && list.author === user.email)
-        : [...wordLists.filter(list => list.secret === 1 && list.author === user.email), ...publicLists];
-
-    const sortedAndFilteredLists = filteredLists
+    const filteredLists = wordLists
         .filter(list => list.title.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => {
             if (sortOrder === 'asc') {
@@ -105,47 +78,32 @@ function WordListPage({ user }) {
                     <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="sort-btn" title="정렬 순서 변경">
                         <FontAwesomeIcon icon={sortOrder === 'asc' ? faSortAlphaDown : faSortAlphaUp} />
                     </button>
-                    <button onClick={togglePrivate} className={`toggle-button ${showPrivate ? 'active' : ''}`}>
-                        {showPrivate ? '공개 단어장 보기' : '내 비공개 단어장 보기'}
+                    <button onClick={togglePublicLists} className="toggle-public-btn">
+                        {showPublicLists ? '내 단어장 보기' : '공개 단어장 보기'}
                     </button>
-                    <Link to="/create-wordlist" className="create-list-btn">
-                        <FontAwesomeIcon icon={faPlus} /> 새 단어장 만들기
-                    </Link>
                 </div>
             </div>
             <div className={`word-list-container ${isGridView ? 'grid-view' : 'list-view'}`}>
-                {sortedAndFilteredLists.map((list) => (
+                {filteredLists.map((list) => (
                     <div key={list.id} className="word-list-item">
-                        <div className="word-list-content">
-                            <h3 className="word-list-title">{list.title}</h3>
-                            <p className="word-list-count">{list.words.length} 단어</p>
-                            <p className="word-list-author">작성자: {list.author === user.email ? '나' : list.author}</p>
-                            {isGridView && (
-                                <div className="word-list-preview">
-                                    {list.words.slice(0, 3).map((word, index) => (
-                                        <span key={index} className="preview-word">{word.word}</span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <h3>{list.title}</h3>
+                        <p>{list.words.length} 단어</p>
+                        <p>작성자: {list.author}</p>
                         <div className="word-list-actions">
-                            <Link to={`/flashcard/${list.id}`} className="action-btn flashcard-link" title="학습하기">
+                            <button className="action-btn play-btn" title="학습하기">
                                 <FontAwesomeIcon icon={faPlay} />
-                                <span className="tooltip">학습하기</span>
-                            </Link>
-                            {list.author === user.email && (
+                            </button>
+                            {user.email === list.author && (
                                 <>
-                                    <button onClick={() => editWordList(list.id)} className="action-btn edit-btn" title="수정하기">
+                                    <button className="action-btn edit-btn" title="수정하기">
                                         <FontAwesomeIcon icon={faEdit} />
-                                        <span className="tooltip">수정하기</span>
                                     </button>
-                                    <button onClick={() => deleteWordList(list.id)} className="action-btn delete-btn" title="삭제하기">
+                                    <button
+                                        className="action-btn delete-btn"
+                                        title="삭제하기"
+                                        onClick={() => deleteWordList(list.id, list.author)}
+                                    >
                                         <FontAwesomeIcon icon={faTrash} />
-                                        <span className="tooltip">삭제하기</span>
-                                    </button>
-                                    <button onClick={() => toggleWordListSecret(list.id, list.secret)} className="action-btn secret-btn" title={list.secret === 1 ? "비공개로 전환" : "공개로 전환"}>
-                                        <FontAwesomeIcon icon={list.secret === 1 ? faEye : faEyeSlash} />
-                                        <span className="tooltip">{list.secret === 1 ? "비공개로 전환" : "공개로 전환"}</span>
                                     </button>
                                 </>
                             )}
@@ -153,11 +111,6 @@ function WordListPage({ user }) {
                     </div>
                 ))}
             </div>
-            {sortedAndFilteredLists.length === 0 && (
-                <p className="no-lists-message">
-                    {searchTerm ? '검색 결과가 없습니다.' : (showPrivate ? '비공개 단어장이 없습니다.' : '공개된 단어장이 없습니다.')}
-                </p>
-            )}
         </div>
     );
 }

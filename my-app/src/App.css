@@ -109,28 +109,3 @@ input[type="text"]:focus, select:focus {
     align-items: center;
 }
 
-.google-login-button {
-    display: inline-flex;
-    align-items: center;
-    background-color: #4285F4;
-    color: white;
-    border: none;
-    padding: 1px;
-    border-radius: 2px;
-    font-family: Roboto, sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.google-login-button img {
-    width: 18px;
-    height: 18px;
-    margin-right: 24px;
-    background-color: white;
-    padding: 10px;
-}
-
-.google-login-button span {
-    padding: 10px 14px 10px 0;
-}
