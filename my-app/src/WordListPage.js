@@ -42,7 +42,7 @@ function WordListPage({ user }) {
     const deleteWordList = async (id) => {
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
             try {
-                await axios.delete(`/api/vocalist/${id}`);
+                await axios.delete(`/api/uservocalist/delete/${id}`);
                 loadWordLists();
                 loadPublicLists();
             } catch (error) {

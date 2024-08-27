@@ -1,50 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import axios from 'axios';
 import { ThemeProvider } from './ThemeContext';
 import Sidebar from './Sidebar';
 import AppContent from './AppContent';
 import LoginButton from './LoginButton';
 import './App.css';
 
+// Axios 인스턴스 생성
+const api = axios.create({
+    baseURL: 'http://ec2-52-79-241-189.ap-northeast-2.compute.amazonaws.com:8080',
+    withCredentials: true
+});
+
 function App() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            setUser(JSON.parse(savedUser));
-        }
+        checkLoginStatus();
     }, []);
 
-    const handleLogin = (userData) => {
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+    const checkLoginStatus = async () => {
+        try {
+            const response = await api.get('/api/users');
+            setUser(response.data);
+        } catch (error) {
+            console.error('Failed to fetch user data:', error);
+        }
     };
 
-    const handleLogout = () => {
-        setUser(null);
-        localStorage.removeItem('user');
+    const handleLogout = async () => {
+        try {
+            await api.get('/api/users/logout');
+            setUser(null);
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (
         <ThemeProvider>
             <Router>
-                <GoogleOAuthProvider clientId="260071461232-28kfnkfhca1r8do97pc3u93nup090k6q.apps.googleusercontent.com">
-                    <div className="app-container">
-                        <header className="app-header">
-                            <div className="login-container">
-                                <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
-                            </div>
-                        </header>
-                        <div className="app-body">
-                            <Sidebar user={user} />
-                            <main className="main-content">
-                                <AppContent user={user} />
-                            </main>
-                        </div>
+                <div className="app-container">
+                    <header className="app-header">
+                        <LoginButton user={user} onLogin={setUser} onLogout={handleLogout} api={api} />
+                    </header>
+                    <div className="app-body">
+                        <Sidebar user={user} />
+                        <main className="main-content">
+                            <AppContent user={user} />
+                        </main>
                     </div>
-                </GoogleOAuthProvider>
+                </div>
             </Router>
         </ThemeProvider>
     );

@@ -1,17 +1,30 @@
-import React from 'react';
-import { GoogleLogin, googleLogout } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
+import React, { useEffect } from 'react';
 import './LoginButton.css';
 
-function LoginButton({ user, onLogin, onLogout }) {
-    const handleLoginSuccess = (credentialResponse) => {
-        const decodedUser = jwtDecode(credentialResponse.credential);
-        onLogin(decodedUser);
+function LoginButton({ user, onLogin, onLogout, api }) {
+    const handleGoogleLogin = () => {
+        window.location.href = "http://ec2-52-79-241-189.ap-northeast-2.compute.amazonaws.com:8080/oauth2/authorization/google";
     };
 
-    const handleLogout = () => {
-        googleLogout();
-        onLogout();
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenFromUrl = urlParams.get('token');
+        if (tokenFromUrl) {
+            fetchUserData(tokenFromUrl);
+        }
+    }, []);
+
+    const fetchUserData = async (token) => {
+        try {
+            const response = await api.get('/api/users', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            onLogin(response.data);
+        } catch (error) {
+            console.error('Failed to fetch user data:', error);
+        }
     };
 
     return (
@@ -20,17 +33,13 @@ function LoginButton({ user, onLogin, onLogout }) {
                 <div className="user-info">
                     <img src={user.picture} alt={user.name} className="user-avatar" />
                     <span className="user-name">{user.name}</span>
-                    <button onClick={handleLogout} className="logout-btn">로그아웃</button>
+                    <button onClick={onLogout} className="logout-btn">로그아웃</button>
                 </div>
             ) : (
-                <GoogleLogin
-                    onSuccess={handleLoginSuccess}
-                    onError={() => console.log('로그인 실패')}
-                    useOneTap
-                    theme="filled_blue"
-                    shape="pill"
-                    text="signin_with"
-                />
+                <button onClick={handleGoogleLogin} className="google-login-button">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" />
+                    <span>Google 계정으로 로그인</span>
+                </button>
             )}
         </div>
     );
