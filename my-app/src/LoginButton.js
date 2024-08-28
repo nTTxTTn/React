@@ -1,34 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import './LoginButton.css';
 
-function LoginButton({ user, onLogin, onLogout, api }) {
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenFromUrl = urlParams.get('token');
-        if (tokenFromUrl) {
-            fetchUserData(tokenFromUrl);
-        }
-    }, []);
-
-    const fetchUserData = async (token) => {
-        try {
-            const response = await api.get('/api/users', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            onLogin(response.data);
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-        }
-    };
-
+function LoginButton({ user, onLogout, api }) {
     const handleGoogleLogin = (credentialResponse) => {
         // 백엔드로 Google 인증 정보 전송
         api.post('/oauth2/authorization/google', { credential: credentialResponse.credential })
             .then(response => {
-                fetchUserData(response.data.token);
+                // 백엔드에서 제공하는 리디렉션 URL로 이동
+                window.location.href = response.data.redirectUrl;
             })
             .catch(error => {
                 console.error('Login failed:', error);
