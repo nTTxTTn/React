@@ -83,6 +83,7 @@ function AppWithAuth() {
                         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
                         <Route path="/" element={<AppContent user={user} api={api} />} />
                         <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
+                        <Route path="/create-wordlist" element={<CreateWordList user={user} />} />
                         {/* Add more routes as needed */}
                     </Routes>
                 </main>

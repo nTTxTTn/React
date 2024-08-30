@@ -14,13 +14,8 @@ function CreateWordList({ user }) {
 
     useEffect(() => {
         console.log('CreateWordList component mounted. User:', user);
-        if (user === null) {
-            console.log('No user found, redirecting to home page');
-            navigate('/');
-        } else {
-            setIsLoading(false);
-        }
-    }, [user, navigate]);
+        setIsLoading(false);
+    }, [user]);
 
     const addWord = () => {
         if (currentWord && currentDefinition) {
@@ -52,17 +47,20 @@ function CreateWordList({ user }) {
                     count: words.length,
                     price: 0
                 };
+                console.log('Sending request to create word list:', newWordList);
                 const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${user.token}`
                     }
                 });
-                console.log('새 단어장 생성:', response.data);
+                console.log('New word list created:', response.data);
 
                 // 단어 추가
                 const wordListId = response.data.id;
+                console.log('Adding words to word list ID:', wordListId);
                 for (let word of words) {
+                    console.log('Adding word:', word);
                     await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}`, {
                         word: word.word,
                         meaning: word.definition
@@ -74,93 +72,97 @@ function CreateWordList({ user }) {
                     });
                 }
 
+                console.log('All words added successfully');
                 navigate('/words');
             } catch (error) {
-                console.error('단어장 생성 오류:', error);
+                console.error('Error creating word list:', error);
                 alert('단어장 생성 중 오류가 발생했습니다.');
             }
         } else {
+            console.log('Form validation failed');
             alert('단어장 이름을 입력하고 최소 한 개의 단어를 추가해주세요.');
         }
     };
+
+    console.log('Rendering CreateWordList. User:', user, 'IsLoading:', isLoading);
 
     if (isLoading) {
         return <div>로딩 중...</div>;
     }
 
-    if (!user) {
-        return <div>접근 권한이 없습니다. 로그인이 필요합니다.</div>;
-    }
-
     return (
         <div className="create-wordlist card fade-in">
             <h2 className="create-wordlist-title">새 단어장 만들기</h2>
-            <form onSubmit={handleSubmit} className="create-wordlist-form">
-                <div className="form-group">
-                    <label htmlFor="listName">단어장 이름</label>
-                    <input
-                        type="text"
-                        id="listName"
-                        value={listName}
-                        onChange={(e) => setListName(e.target.value)}
-                        placeholder="단어장 이름을 입력하세요"
-                        required
-                        className="create-wordlist-input"
-                    />
-                </div>
-                <div>
-                    <label className="checkbox-label">
-                        <input
-                            type="checkbox"
-                            checked={isPublic}
-                            onChange={(e) => setIsPublic(e.target.checked)}
-                            className="checkbox-input"
-                        />
-                        <span className="checkbox-text">공개 단어장으로 설정</span>
-                    </label>
-                </div>
-                <div className="form-group">
-                    <label>새 단어 추가</label>
-                    <div className="word-input-container">
+            {user ? (
+                <form onSubmit={handleSubmit} className="create-wordlist-form">
+                    <div className="form-group">
+                        <label htmlFor="listName">단어장 이름</label>
                         <input
                             type="text"
-                            value={currentWord}
-                            onChange={(e) => setCurrentWord(e.target.value)}
-                            placeholder="단어"
+                            id="listName"
+                            value={listName}
+                            onChange={(e) => setListName(e.target.value)}
+                            placeholder="단어장 이름을 입력하세요"
+                            required
                             className="create-wordlist-input"
                         />
-                        <input
-                            type="text"
-                            value={currentDefinition}
-                            onChange={(e) => setCurrentDefinition(e.target.value)}
-                            placeholder="의미"
-                            className="create-wordlist-input"
-                        />
-                        <button type="button" onClick={addWord} className="button add-word-btn">
-                            추가
-                        </button>
                     </div>
-                </div>
-                {words.length > 0 && (
-                    <div className="word-list-container">
-                        <h3>추가된 단어 목록</h3>
-                        <ul className="word-list">
-                            {words.map((word, index) => (
-                                <li key={index} className="word-item">
-                                    <span className="word-text">{word.word}</span>
-                                    <span className="word-definition">{word.definition}</span>
-                                    <button type="button" onClick={() => removeWord(index)} className="button remove-word-btn">
-                                        삭제
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                    <div>
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={(e) => setIsPublic(e.target.checked)}
+                                className="checkbox-input"
+                            />
+                            <span className="checkbox-text">공개 단어장으로 설정</span>
+                        </label>
                     </div>
-                )}
-                <button type="submit" className="button create-wordlist-button submit-button">
-                    단어장 생성
-                </button>
-            </form>
+                    <div className="form-group">
+                        <label>새 단어 추가</label>
+                        <div className="word-input-container">
+                            <input
+                                type="text"
+                                value={currentWord}
+                                onChange={(e) => setCurrentWord(e.target.value)}
+                                placeholder="단어"
+                                className="create-wordlist-input"
+                            />
+                            <input
+                                type="text"
+                                value={currentDefinition}
+                                onChange={(e) => setCurrentDefinition(e.target.value)}
+                                placeholder="의미"
+                                className="create-wordlist-input"
+                            />
+                            <button type="button" onClick={addWord} className="button add-word-btn">
+                                추가
+                            </button>
+                        </div>
+                    </div>
+                    {words.length > 0 && (
+                        <div className="word-list-container">
+                            <h3>추가된 단어 목록</h3>
+                            <ul className="word-list">
+                                {words.map((word, index) => (
+                                    <li key={index} className="word-item">
+                                        <span className="word-text">{word.word}</span>
+                                        <span className="word-definition">{word.definition}</span>
+                                        <button type="button" onClick={() => removeWord(index)} className="button remove-word-btn">
+                                            삭제
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    <button type="submit" className="button create-wordlist-button submit-button">
+                        단어장 생성
+                    </button>
+                </form>
+            ) : (
+                <div>로그인이 필요합니다. <button onClick={() => navigate('/')}>홈으로 이동</button></div>
+            )}
         </div>
     );
 }
