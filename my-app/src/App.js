@@ -9,6 +9,7 @@ import Sidebar from './Sidebar';
 import AppContent from './AppContent';
 import LoadingSpinner from './LoadingSpinner';
 import AuthCallback from './AuthCallback';
+import CreateWordList from './CreateWordList';
 import './App.css';
 
 const api = axios.create({
