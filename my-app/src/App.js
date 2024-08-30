@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ThemeProvider } from './ThemeContext';
-import Sidebar from './Sidebar';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import LoginButton from './LoginButton';
+import Sidebar from './Sidebar';
 import AppContent from './AppContent';
+import LoadingSpinner from './LoadingSpinner';
 import './App.css';
 
 const api = axios.create({
@@ -15,75 +16,70 @@ const api = axios.create({
 
 function App() {
     return (
-        <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-            <ThemeProvider>
-                <Router>
-                    <AppWithAuth />
-                </Router>
-            </ThemeProvider>
-        </GoogleOAuthProvider>
+        <Router>
+            <AppWithAuth />
+            <ToastContainer />
+        </Router>
     );
 }
 
 function AppWithAuth() {
     const [user, setUser] = useState(null);
-    const location = useLocation();
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         checkLoginStatus();
     }, []);
 
-    useEffect(() => {
-        const urlParams = new URLSearchParams(location.search);
-        const tokenFromUrl = urlParams.get('token');
-        if (tokenFromUrl) {
-            fetchUserData(tokenFromUrl);
-            // 토큰을 사용한 후 URL에서 제거
-            navigate(location.pathname, { replace: true });
-        }
-    }, [location, navigate]);
-
     const checkLoginStatus = async () => {
         try {
-            const response = await api.get('/api/users');
+            setLoading(true);
+            const response = await api.get('/api/auth/status');
             setUser(response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
+            if (error.response && error.response.status === 401) {
+                setUser(null);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
-    const fetchUserData = async (token) => {
-        try {
-            const response = await api.get('/api/users', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            setUser(response.data);
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-        }
+    const handleLogin = () => {
+        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
     };
 
     const handleLogout = async () => {
         try {
-            await api.get('/api/users/logout');
+            await api.post('/api/auth/logout');
             setUser(null);
+            navigate('/');
+            toast.success('로그아웃되었습니다.');
         } catch (error) {
             console.error('Logout failed:', error);
+            toast.error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
         }
     };
+
+    if (loading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div className="app-container">
             <header className="app-header">
-                <LoginButton user={user} onLogin={setUser} onLogout={handleLogout} api={api} />
+                <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
             </header>
             <div className="app-body">
                 <Sidebar user={user} />
                 <main className="main-content">
-                    <AppContent user={user} api={api} />
+                    <Routes>
+                        <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
+                        <Route path="/" element={<AppContent user={user} api={api} />} />
+                        {/* Add more routes as needed */}
+                    </Routes>
                 </main>
             </div>
         </div>

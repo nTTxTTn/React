@@ -1,18 +1,29 @@
 import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import './LoginButton.css';
 
-function LoginButton({ user, onLogout, api }) {
-    const handleGoogleLogin = (credentialResponse) => {
-        // 백엔드로 Google 인증 정보 전송
-        api.post('/oauth2/authorization/google', { credential: credentialResponse.credential })
-            .then(response => {
-                // 백엔드에서 제공하는 리디렉션 URL로 이동
-                window.location.href = response.data.redirectUrl;
-            })
-            .catch(error => {
-                console.error('Login failed:', error);
-            });
+function LoginButton({ user, onLogin, onLogout }) {
+    const navigate = useNavigate();
+
+    const handleLogin = () => {
+        try {
+            onLogin();
+        } catch (error) {
+            console.error('Login failed:', error);
+            toast.error('로그인에 실패했습니다. 다시 시도해 주세요.');
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await onLogout();
+            toast.success('로그아웃되었습니다.');
+            navigate('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            toast.error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
+        }
     };
 
     return (
@@ -21,17 +32,10 @@ function LoginButton({ user, onLogout, api }) {
                 <div className="user-info">
                     <img src={user.picture} alt={user.name} className="user-avatar" />
                     <span className="user-name">{user.name}</span>
-                    <button onClick={onLogout} className="logout-btn">로그아웃</button>
+                    <button onClick={handleLogout} className="logout-btn">로그아웃</button>
                 </div>
             ) : (
-                <GoogleLogin
-                    onSuccess={handleGoogleLogin}
-                    onError={() => console.log('로그인 실패')}
-                    useOneTap
-                    theme="filled_blue"
-                    shape="pill"
-                    text="signin_with"
-                />
+                <button onClick={handleLogin} className="login-btn">Google 로그인</button>
             )}
         </div>
     );
