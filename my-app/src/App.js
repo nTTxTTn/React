@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
 import AppContent from './AppContent';
@@ -16,10 +17,12 @@ const api = axios.create({
 
 function App() {
     return (
-        <Router>
-            <AppWithAuth />
-            <ToastContainer />
-        </Router>
+        <ThemeProvider>
+            <Router>
+                <AppWithAuth />
+                <ToastContainer />
+            </Router>
+        </ThemeProvider>
     );
 }
 
