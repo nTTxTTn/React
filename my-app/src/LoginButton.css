@@ -40,20 +40,42 @@
     background-color: var(--primary-color-dark);
 }
 
-/* Google 로그인 버튼 스타일 커스터마이징 */
-.google-login-button {
-    display: flex !important;
+/* Google 로그인 버튼 스타일 */
+.google-btn {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 10px 15px !important;
-    border-radius: 20px !important;
-    background-color: #4285F4 !important;
-    color: white !important;
-    font-weight: bold !important;
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    padding: 1px;
+    border-radius: 2px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    font-family: 'Roboto', sans-serif;
+    transition: background-color 0.3s;
 }
 
-.google-login-button:hover {
-    background-color: #3367D6 !important;
+.google-btn:hover {
+    background-color: #357ae8;
+}
+
+.google-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 2px;
+    margin-right: 1px;
+}
+
+.google-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-text {
+    padding: 10px 10px 10px 0;
+    font-size: 14px;
+    font-weight: bold;
 }

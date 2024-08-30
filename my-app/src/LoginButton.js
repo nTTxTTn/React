@@ -35,7 +35,12 @@ function LoginButton({ user, onLogin, onLogout }) {
                     <button onClick={handleLogout} className="logout-btn">로그아웃</button>
                 </div>
             ) : (
-                <button onClick={handleLogin} className="login-btn">Google 로그인</button>
+                <button className="google-btn" onClick={handleLogin}>
+                    <div className="google-icon-wrapper">
+                        <img className="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google logo"/>
+                    </div>
+                    <p className="btn-text"><b>Sign in with Google</b></p>
+                </button>
             )}
         </div>
     );

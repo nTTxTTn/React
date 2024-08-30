@@ -9,11 +9,16 @@ function CreateWordList({ user }) {
     const [currentWord, setCurrentWord] = useState('');
     const [currentDefinition, setCurrentDefinition] = useState('');
     const [isPublic, setIsPublic] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!user) {
+        console.log('CreateWordList component mounted. User:', user);
+        if (user === null) {
+            console.log('No user found, redirecting to home page');
             navigate('/');
+        } else {
+            setIsLoading(false);
         }
     }, [user, navigate]);
 
@@ -31,19 +36,44 @@ function CreateWordList({ user }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!user) {
+            console.log('Attempt to submit without user, redirecting to home page');
+            navigate('/');
+            return;
+        }
         if (listName && words.length > 0) {
             try {
+                // 단어장 생성
                 const newWordList = {
+                    id: 0,  // API will assign the actual ID
+                    author: user.email,
                     title: listName,
-                    words: words.map(w => ({ word: w.word, meaning: w.definition })),
-                    secret: isPublic ? 0 : 1
+                    secret: isPublic ? 0 : 1,
+                    count: words.length,
+                    price: 0
                 };
-                const response = await axios.post('http://52.79.241.189:8080/api/vocalist', newWordList, {
+                const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${user.token}`
                     }
                 });
                 console.log('새 단어장 생성:', response.data);
+
+                // 단어 추가
+                const wordListId = response.data.id;
+                for (let word of words) {
+                    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}`, {
+                        word: word.word,
+                        meaning: word.definition
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${user.token}`
+                        }
+                    });
+                }
+
                 navigate('/words');
             } catch (error) {
                 console.error('단어장 생성 오류:', error);
@@ -54,7 +84,13 @@ function CreateWordList({ user }) {
         }
     };
 
-    if (!user) return null;
+    if (isLoading) {
+        return <div>로딩 중...</div>;
+    }
+
+    if (!user) {
+        return <div>접근 권한이 없습니다. 로그인이 필요합니다.</div>;
+    }
 
     return (
         <div className="create-wordlist card fade-in">

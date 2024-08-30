@@ -8,6 +8,7 @@ import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
 import AppContent from './AppContent';
 import LoadingSpinner from './LoadingSpinner';
+import AuthCallback from './AuthCallback';
 import './App.css';
 
 const api = axios.create({
@@ -38,7 +39,7 @@ function AppWithAuth() {
     const checkLoginStatus = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/api/auth/status');
+            const response = await api.get('/api/users');
             setUser(response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
@@ -56,7 +57,7 @@ function AppWithAuth() {
 
     const handleLogout = async () => {
         try {
-            await api.post('/api/auth/logout');
+            await api.post('/api/users/logout');
             setUser(null);
             navigate('/');
             toast.success('로그아웃되었습니다.');
@@ -81,6 +82,7 @@ function AppWithAuth() {
                     <Routes>
                         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
                         <Route path="/" element={<AppContent user={user} api={api} />} />
+                        <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
                         {/* Add more routes as needed */}
                     </Routes>
                 </main>
