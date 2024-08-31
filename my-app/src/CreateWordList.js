@@ -40,12 +40,9 @@ function CreateWordList({ user }) {
             try {
                 // 단어장 생성
                 const newWordList = {
-                    id: 0,  // API will assign the actual ID
-                    author: user.email,
                     title: listName,
                     secret: isPublic ? 0 : 1,
-                    count: words.length,
-                    price: 0
+
                 };
                 console.log('Sending request to create word list:', newWordList);
                 const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
@@ -56,7 +53,7 @@ function CreateWordList({ user }) {
                 });
                 console.log('New word list created:', response.data);
 
-                // 단어 추가
+                // 단어 추가 단어장의 아이디 받아오기
                 const wordListId = response.data.id;
                 console.log('Adding words to word list ID:', wordListId);
                 for (let word of words) {
