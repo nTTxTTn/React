@@ -4,10 +4,10 @@ import './CreateWordList.css';
 import axios from 'axios';
 
 function CreateWordList({ user }) {
-    const [listName, setListName] = useState('');
+    const [title, setTitle] = useState('');
     const [words, setWords] = useState([]);
-    const [currentWord, setCurrentWord] = useState('');
-    const [currentDefinition, setCurrentDefinition] = useState('');
+    const [currentText, setCurrentText] = useState('');
+    const [currentTranstext, setCurrentTranstext] = useState('');
     const [isPublic, setIsPublic] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
@@ -18,10 +18,10 @@ function CreateWordList({ user }) {
     }, [user]);
 
     const addWord = () => {
-        if (currentWord && currentDefinition) {
-            setWords([...words, { word: currentWord, definition: currentDefinition }]);
-            setCurrentWord('');
-            setCurrentDefinition('');
+        if (currentText && currentTranstext) {
+            setWords([...words, { text: currentText, transtext: currentTranstext }]);
+            setCurrentText('');
+            setCurrentTranstext('');
         }
     };
 
@@ -36,13 +36,13 @@ function CreateWordList({ user }) {
             navigate('/');
             return;
         }
-        if (listName && words.length > 0) {
+        if (title && words.length > 0) {
             try {
                 // 단어장 생성
                 const newWordList = {
-                    title: listName,
+                    title: title,
                     secret: isPublic ? 0 : 1,
-
+                    author: user.email
                 };
                 console.log('Sending request to create word list:', newWordList);
                 const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
@@ -53,14 +53,14 @@ function CreateWordList({ user }) {
                 });
                 console.log('New word list created:', response.data);
 
-                // 단어 추가 단어장의 아이디 받아오기
+                // 단어 추가
                 const wordListId = response.data.id;
                 console.log('Adding words to word list ID:', wordListId);
                 for (let word of words) {
                     console.log('Adding word:', word);
                     await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}`, {
-                        word: word.word,
-                        meaning: word.definition
+                        text: word.text,
+                        transtext: word.transtext
                     }, {
                         headers: {
                             'Content-Type': 'application/json',
@@ -93,12 +93,12 @@ function CreateWordList({ user }) {
             {user ? (
                 <form onSubmit={handleSubmit} className="create-wordlist-form">
                     <div className="form-group">
-                        <label htmlFor="listName">단어장 이름</label>
+                        <label htmlFor="title">단어장 이름</label>
                         <input
                             type="text"
-                            id="listName"
-                            value={listName}
-                            onChange={(e) => setListName(e.target.value)}
+                            id="title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
                             placeholder="단어장 이름을 입력하세요"
                             required
                             className="create-wordlist-input"
@@ -120,15 +120,15 @@ function CreateWordList({ user }) {
                         <div className="word-input-container">
                             <input
                                 type="text"
-                                value={currentWord}
-                                onChange={(e) => setCurrentWord(e.target.value)}
+                                value={currentText}
+                                onChange={(e) => setCurrentText(e.target.value)}
                                 placeholder="단어"
                                 className="create-wordlist-input"
                             />
                             <input
                                 type="text"
-                                value={currentDefinition}
-                                onChange={(e) => setCurrentDefinition(e.target.value)}
+                                value={currentTranstext}
+                                onChange={(e) => setCurrentTranstext(e.target.value)}
                                 placeholder="의미"
                                 className="create-wordlist-input"
                             />
@@ -143,8 +143,8 @@ function CreateWordList({ user }) {
                             <ul className="word-list">
                                 {words.map((word, index) => (
                                     <li key={index} className="word-item">
-                                        <span className="word-text">{word.word}</span>
-                                        <span className="word-definition">{word.definition}</span>
+                                        <span className="word-text">{word.text}</span>
+                                        <span className="word-definition">{word.transtext}</span>
                                         <button type="button" onClick={() => removeWord(index)} className="button remove-word-btn">
                                             삭제
                                         </button>
