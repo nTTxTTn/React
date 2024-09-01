@@ -40,9 +40,7 @@ function CreateWordList({ user }) {
             try {
                 // 단어장 생성
                 const newWordList = {
-                    title: title,
-                    secret: isPublic ? 0 : 1,
-                    author: user.email
+                    title: title
                 };
                 console.log('Sending request to create word list:', newWordList);
                 const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
