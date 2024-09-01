@@ -3,17 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import './CreateWordList.css';
 import axios from 'axios';
 
+// axios 인터셉터 설정
+axios.interceptors.request.use(request => {
+    console.log('Starting Request', JSON.stringify(request, null, 2))
+    return request
+})
+
 function CreateWordList({ user }) {
     const [title, setTitle] = useState('');
     const [words, setWords] = useState([]);
     const [currentText, setCurrentText] = useState('');
     const [currentTranstext, setCurrentTranstext] = useState('');
-    const [isPublic, setIsPublic] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         console.log('CreateWordList component mounted. User:', user);
+        console.log('Current user token:', user.token);
         setIsLoading(false);
     }, [user]);
 
@@ -36,9 +42,12 @@ function CreateWordList({ user }) {
             navigate('/');
             return;
         }
+
+        console.log('Token before request:', user.token);
+
         if (title && words.length > 0) {
             try {
-                // 단어장 생성
+                // 단어장 생성 (title만 포함)
                 const newWordList = {
                     title: title
                 };
@@ -71,6 +80,15 @@ function CreateWordList({ user }) {
                 navigate('/words');
             } catch (error) {
                 console.error('Error creating word list:', error);
+                if (error.response) {
+                    console.error('Error response:', error.response.data);
+                    console.error('Error status:', error.response.status);
+                    console.error('Error headers:', error.response.headers);
+                } else if (error.request) {
+                    console.error('Error request:', error.request);
+                } else {
+                    console.error('Error message:', error.message);
+                }
                 alert('단어장 생성 중 오류가 발생했습니다.');
             }
         } else {
@@ -91,27 +109,16 @@ function CreateWordList({ user }) {
             {user ? (
                 <form onSubmit={handleSubmit} className="create-wordlist-form">
                     <div className="form-group">
-                        <label htmlFor="title">단어장 이름</label>
+                        <label htmlFor="listName">단어장 이름</label>
                         <input
                             type="text"
-                            id="title"
+                            id="listName"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="단어장 이름을 입력하세요"
                             required
                             className="create-wordlist-input"
                         />
-                    </div>
-                    <div>
-                        <label className="checkbox-label">
-                            <input
-                                type="checkbox"
-                                checked={isPublic}
-                                onChange={(e) => setIsPublic(e.target.checked)}
-                                className="checkbox-input"
-                            />
-                            <span className="checkbox-text">공개 단어장으로 설정</span>
-                        </label>
                     </div>
                     <div className="form-group">
                         <label>새 단어 추가</label>
