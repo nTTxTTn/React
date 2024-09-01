@@ -18,8 +18,12 @@ function Sidebar() {
 
     return (
         <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-            <button className="toggle-btn" onClick={toggleSidebar}>
-                <FontAwesomeIcon icon={isCollapsed ? faBars : faChevronLeft} />
+            <button
+                className="toggle-btn"
+                onClick={toggleSidebar}
+                aria-label={isCollapsed ? "사이드바 열기" : "사이드바 닫기"}
+            >
+                <FontAwesomeIcon icon={isCollapsed ? faBars : faChevronLeft}/>
             </button>
             <Link to="/" className="sidebar-header">
                 <div className="logo-container">
@@ -44,7 +48,11 @@ function Sidebar() {
                 </Link>
             </nav>
             <div className="sidebar-footer">
-                <button onClick={toggleDarkMode} className="theme-toggle">
+                <button
+                    onClick={toggleDarkMode}
+                    className="theme-toggle"
+                    aria-label={isDarkMode ? "라이트 모드로 변경" : "다크 모드로 변경"}
+                >
                     {isDarkMode ? '🌞' : '🌙'}
                 </button>
             </div>
