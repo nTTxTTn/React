@@ -12,6 +12,7 @@ import AuthCallback from './AuthCallback';
 import CreateWordList from './CreateWordList';
 import './App.css';
 import FlashcardView from "./FlashcardView";
+import WordListDetail from "./WordListDetail";
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -87,6 +88,7 @@ function AppWithAuth() {
                         <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
                         <Route path="/create-wordlist" element={<CreateWordList user={user} />} />
                         <Route path="/flashcard/:id" element={<FlashcardView />} />
+                        <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
                         {/* Add more routes as needed */}
                     </Routes>
                 </main>
