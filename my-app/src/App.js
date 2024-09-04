@@ -11,6 +11,7 @@ import LoadingSpinner from './LoadingSpinner';
 import AuthCallback from './AuthCallback';
 import CreateWordList from './CreateWordList';
 import './App.css';
+import FlashcardView from "./FlashcardView";
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -85,6 +86,7 @@ function AppWithAuth() {
                         <Route path="/" element={<AppContent user={user} api={api} />} />
                         <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
                         <Route path="/create-wordlist" element={<CreateWordList user={user} />} />
+                        <Route path="/flashcard/:id" element={<FlashcardView />} />
                         {/* Add more routes as needed */}
                     </Routes>
                 </main>

@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp } from '@fortawesome/free-solid-svg-icons';
 import './WordListPage.css';
 
-function WordListPage({ user, api }) {
+// Axios 인스턴스 생성
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL
+});
+
+function WordListPage({ user }) {
     const [wordLists, setWordLists] = useState([]);
+    const [wordCounts, setWordCounts] = useState({});
     const [isGridView, setIsGridView] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
@@ -21,9 +28,24 @@ function WordListPage({ user, api }) {
             const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
             const response = await api.get(endpoint);
             setWordLists(response.data);
+            fetchWordCounts(response.data);
         } catch (error) {
             console.error('Failed to fetch word lists:', error);
         }
+    };
+
+    const fetchWordCounts = async (lists) => {
+        const counts = {};
+        for (const list of lists) {
+            try {
+                const response = await api.get(`/api/vocacontent/${list.id}`);
+                counts[list.id] = response.data.length;
+            } catch (error) {
+                console.error(`Failed to fetch word count for list ${list.id}:`, error);
+                counts[list.id] = 0;
+            }
+        }
+        setWordCounts(counts);
     };
 
     const togglePublicLists = () => {
@@ -39,7 +61,8 @@ function WordListPage({ user, api }) {
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
             try {
                 await api.delete(`/api/uservocalist/delete/${id}`);
-                fetchWordLists(); // 목록 새로고침
+                /*스웨거 학인후 api 재지정 필요*/
+                fetchWordLists();
             } catch (error) {
                 console.error('Failed to delete word list:', error);
                 alert('단어장 삭제에 실패했습니다.');
@@ -87,7 +110,7 @@ function WordListPage({ user, api }) {
                 {filteredLists.map((list) => (
                     <div key={list.id} className="word-list-item">
                         <h3>{list.title}</h3>
-                        <p>{list.words.length} 단어</p>
+                        <p>{wordCounts[list.id] || 0} 단어</p>
                         <p>작성자: {list.author}</p>
                         <div className="word-list-actions">
                             <button className="action-btn play-btn" title="학습하기">
