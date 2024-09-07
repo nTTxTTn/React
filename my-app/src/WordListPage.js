@@ -4,18 +4,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp } from '@fortawesome/free-solid-svg-icons';
 import './WordListPage.css';
 
-// Axios 인스턴스 생성
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true
 });
 
 function WordListPage({ user }) {
     const [wordLists, setWordLists] = useState([]);
-    const [wordCounts, setWordCounts] = useState({});
     const [isGridView, setIsGridView] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
     const [showPublicLists, setShowPublicLists] = useState(false);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (user) {
@@ -25,31 +26,30 @@ function WordListPage({ user }) {
 
     const fetchWordLists = async () => {
         try {
+            setError(null);
+            setLoading(true);
             const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
             const response = await api.get(endpoint);
-            setWordLists(response.data);
-            fetchWordCounts(response.data);
+            const lists = response.data;
+
+            // Fetch word counts for each list
+            const listsWithCounts = await Promise.all(lists.map(async (list) => {
+                try {
+                    const countResponse = await api.get(`/api/vocacontent/${list.id}`);
+                    return { ...list, wordCount: countResponse.data.length };
+                } catch (error) {
+                    console.error(`Failed to fetch word count for list ${list.id}:`, error);
+                    return { ...list, wordCount: 0 };
+                }
+            }));
+
+            setWordLists(listsWithCounts);
         } catch (error) {
             console.error('Failed to fetch word lists:', error);
+            setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const fetchWordCounts = async (lists) => {
-        const counts = {};
-        for (const list of lists) {
-            try {
-                const response = await api.get(`/api/vocacontent/${list.id}`);
-                counts[list.id] = response.data.length;
-            } catch (error) {
-                console.error(`Failed to fetch word count for list ${list.id}:`, error);
-                counts[list.id] = 0;
-            }
-        }
-        setWordCounts(counts);
-    };
-
-    const togglePublicLists = () => {
-        setShowPublicLists(!showPublicLists);
     };
 
     const deleteWordList = async (id, author) => {
@@ -61,8 +61,7 @@ function WordListPage({ user }) {
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
             try {
                 await api.delete(`/api/uservocalist/delete/${id}`);
-                /*스웨거 학인후 api 재지정 필요*/
-                fetchWordLists();
+                fetchWordLists(); // Refresh the list after deletion
             } catch (error) {
                 console.error('Failed to delete word list:', error);
                 alert('단어장 삭제에 실패했습니다.');
@@ -79,6 +78,10 @@ function WordListPage({ user }) {
                 return b.title.localeCompare(a.title);
             }
         });
+
+    if (loading) {
+        return <div>로딩 중...</div>;
+    }
 
     return (
         <div className="word-list-page">
@@ -101,38 +104,43 @@ function WordListPage({ user }) {
                     <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="sort-btn" title="정렬 순서 변경">
                         <FontAwesomeIcon icon={sortOrder === 'asc' ? faSortAlphaDown : faSortAlphaUp} />
                     </button>
-                    <button onClick={togglePublicLists} className="toggle-public-btn">
+                    <button onClick={() => setShowPublicLists(!showPublicLists)} className="toggle-public-btn">
                         {showPublicLists ? '내 단어장 보기' : '공개 단어장 보기'}
                     </button>
                 </div>
             </div>
+            {error && <div className="error-message">{error}</div>}
             <div className={`word-list-container ${isGridView ? 'grid-view' : 'list-view'}`}>
-                {filteredLists.map((list) => (
-                    <div key={list.id} className="word-list-item">
-                        <h3>{list.title}</h3>
-                        <p>{wordCounts[list.id] || 0} 단어</p>
-                        <p>작성자: {list.author}</p>
-                        <div className="word-list-actions">
-                            <button className="action-btn play-btn" title="학습하기">
-                                <FontAwesomeIcon icon={faPlay} />
-                            </button>
-                            {user.email === list.author && (
-                                <>
-                                    <button className="action-btn edit-btn" title="수정하기">
-                                        <FontAwesomeIcon icon={faEdit} />
-                                    </button>
-                                    <button
-                                        className="action-btn delete-btn"
-                                        title="삭제하기"
-                                        onClick={() => deleteWordList(list.id, list.author)}
-                                    >
-                                        <FontAwesomeIcon icon={faTrash} />
-                                    </button>
-                                </>
-                            )}
+                {filteredLists.length === 0 ? (
+                    <p>단어장이 없습니다. 새로운 단어장을 만들어보세요!</p>
+                ) : (
+                    filteredLists.map((list) => (
+                        <div key={list.id} className="word-list-item">
+                            <h3>{list.title}</h3>
+                            <p>{list.wordCount} 단어</p>
+                            <p>작성자: {list.author}</p>
+                            <div className="word-list-actions">
+                                <button className="action-btn play-btn" title="학습하기">
+                                    <FontAwesomeIcon icon={faPlay} />
+                                </button>
+                                {user.email === list.author && (
+                                    <>
+                                        <button className="action-btn edit-btn" title="수정하기">
+                                            <FontAwesomeIcon icon={faEdit} />
+                                        </button>
+                                        <button
+                                            className="action-btn delete-btn"
+                                            title="삭제하기"
+                                            onClick={() => deleteWordList(list.id, list.author)}
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         </div>
     );
