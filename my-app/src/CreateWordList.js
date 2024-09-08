@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import './CreateWordList.css';
 import axios from 'axios';
 
-// axios 인터셉터 설정
 axios.interceptors.request.use(request => {
     console.log('Starting Request', JSON.stringify(request, null, 2))
     return request
@@ -14,20 +13,25 @@ function CreateWordList({ user }) {
     const [words, setWords] = useState([]);
     const [currentText, setCurrentText] = useState('');
     const [currentTranstext, setCurrentTranstext] = useState('');
+    const [currentSampleSentence, setCurrentSampleSentence] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         console.log('CreateWordList component mounted. User:', user);
-        console.log('Current user token:', user.token);
         setIsLoading(false);
     }, [user]);
 
     const addWord = () => {
         if (currentText && currentTranstext) {
-            setWords([...words, { text: currentText, transtext: currentTranstext }]);
+            setWords([...words, {
+                text: currentText,
+                transtext: currentTranstext,
+                sampleSentence: currentSampleSentence || ''
+            }]);
             setCurrentText('');
             setCurrentTranstext('');
+            setCurrentSampleSentence('');
         }
     };
 
@@ -43,20 +47,13 @@ function CreateWordList({ user }) {
             return;
         }
 
-        console.log('Token before request:', user.token);
-
         if (title && words.length > 0) {
             try {
                 // 단어장 생성 (title만 포함)
-                const newWordList = {
-                    title: title
-                };
+                const newWordList = { title: title };
                 console.log('Sending request to create word list:', newWordList);
                 const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${user.token}`
-                    }
+                    withCredentials: true
                 });
                 console.log('New word list created:', response.data);
 
@@ -65,14 +62,12 @@ function CreateWordList({ user }) {
                 console.log('Adding words to word list ID:', wordListId);
                 for (let word of words) {
                     console.log('Adding word:', word);
-                    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}`, {
+                    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}/word`, {
                         text: word.text,
-                        transtext: word.transtext
+                        transtext: word.transtext,
+                        sampleSentence: word.sampleSentence
                     }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${user.token}`
-                        }
+                        withCredentials: true
                     });
                 }
 
@@ -137,6 +132,13 @@ function CreateWordList({ user }) {
                                 placeholder="의미"
                                 className="create-wordlist-input"
                             />
+                            <input
+                                type="text"
+                                value={currentSampleSentence}
+                                onChange={(e) => setCurrentSampleSentence(e.target.value)}
+                                placeholder="예문 (선택사항)"
+                                className="create-wordlist-input"
+                            />
                             <button type="button" onClick={addWord} className="button add-word-btn">
                                 추가
                             </button>
@@ -150,6 +152,7 @@ function CreateWordList({ user }) {
                                     <li key={index} className="word-item">
                                         <span className="word-text">{word.text}</span>
                                         <span className="word-definition">{word.transtext}</span>
+                                        {word.sampleSentence && <span className="word-sample">{word.sampleSentence}</span>}
                                         <button type="button" onClick={() => removeWord(index)} className="button remove-word-btn">
                                             삭제
                                         </button>
