@@ -31,6 +31,7 @@ function WordListPage({ user }) {
             setError(null);
             setLoading(true);
             const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
+            console.log(`Fetching word lists from: ${endpoint}`);
             const response = await api.get(endpoint);
             const lists = response.data;
 
@@ -39,8 +40,12 @@ function WordListPage({ user }) {
                 title: list.title,
                 wordCount: list.count,
                 author: list.email,
-                isPublic: list.secret === 0  // 수정: secret이 0이면 공개
+                isPublic: list.secret === 1  // 수정: secret이 1이면 공개
             }));
+
+            console.log(`Fetched ${processedLists.length} word lists`);
+            console.log(`Public lists: ${processedLists.filter(list => list.isPublic).length}`);
+            console.log(`Private lists: ${processedLists.filter(list => !list.isPublic).length}`);
 
             setWordLists(processedLists);
         } catch (error) {
