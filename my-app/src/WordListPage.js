@@ -1,177 +1,175 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import './CreateWordList.css';
 import axios from 'axios';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp, faGlobe, faUser } from '@fortawesome/free-solid-svg-icons';
-import './WordListPage.css';
 
-const api = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL,
-    withCredentials: true
-});
+axios.interceptors.request.use(request => {
+    console.log('Starting Request', JSON.stringify(request, null, 2))
+    return request
+})
 
-function WordListPage({ user }) {
-    const [wordLists, setWordLists] = useState([]);
-    const [isGridView, setIsGridView] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sortOrder, setSortOrder] = useState('asc');
-    const [showPublicLists, setShowPublicLists] = useState(false);
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(true);
+function CreateWordList({ user }) {
+    const [title, setTitle] = useState('');
+    const [words, setWords] = useState([]);
+    const [currentText, setCurrentText] = useState('');
+    const [currentTranstext, setCurrentTranstext] = useState('');
+    const [currentSampleSentence, setCurrentSampleSentence] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user) {
-            fetchWordLists();
-        }
-    }, [user, showPublicLists]);
+        console.log('CreateWordList component mounted. User:', user);
+        setIsLoading(false);
+    }, [user]);
 
-    const fetchWordLists = async () => {
-        try {
-            setError(null);
-            setLoading(true);
-            const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
-            console.log(`Fetching word lists from: ${endpoint}`);
-            const response = await api.get(endpoint);
-            const lists = response.data;
-
-            const processedLists = lists.map(list => ({
-                id: list.id,
-                title: list.title,
-                wordCount: list.count,
-                author: list.email,
-                isPublic: list.secret === 1  // 수정: secret이 1이면 공개
-            }));
-
-            console.log(`Fetched ${processedLists.length} word lists`);
-            console.log(`Public lists: ${processedLists.filter(list => list.isPublic).length}`);
-            console.log(`Private lists: ${processedLists.filter(list => !list.isPublic).length}`);
-
-            setWordLists(processedLists);
-        } catch (error) {
-            console.error('Failed to fetch word lists:', error);
-            if (error.response) {
-                if (error.response.status === 500) {
-                    setError('서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
-                } else {
-                    setError(`단어장을 불러오는데 실패했습니다. 오류 코드: ${error.response.status}`);
-                }
-            } else if (error.request) {
-                setError('서버에서 응답이 없습니다. 인터넷 연결을 확인해 주세요.');
-            } else {
-                setError('요청 설정 중 오류가 발생했습니다. 다시 시도해 주세요.');
-            }
-        } finally {
-            setLoading(false);
+    const addWord = () => {
+        if (currentText && currentTranstext) {
+            setWords([...words, {
+                text: currentText,
+                transtext: currentTranstext,
+                sampleSentence: currentSampleSentence || ''
+            }]);
+            setCurrentText('');
+            setCurrentTranstext('');
+            setCurrentSampleSentence('');
         }
     };
 
-    const deleteWordList = async (id) => {
-        if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
+    const removeWord = (index) => {
+        setWords(words.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!user) {
+            console.log('Attempt to submit without user, redirecting to home page');
+            navigate('/');
+            return;
+        }
+
+        if (title && words.length > 0) {
             try {
-                await api.delete(`/api/uservocalist/delete/${id}`);
-                fetchWordLists();
+                // 단어장 생성 (title만 포함)
+                const newWordList = { title: title };
+                console.log('Sending request to create word list:', newWordList);
+                const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
+                    withCredentials: true
+                });
+                console.log('New word list created:', response.data);
+
+                // 단어 추가
+                const wordListId = response.data.id;
+                console.log('Adding words to word list ID:', wordListId);
+                for (let word of words) {
+                    console.log('Adding word:', word);
+                    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}/word`, {
+                        text: word.text,
+                        transtext: word.transtext,
+                        sampleSentence: word.sampleSentence
+                    }, {
+                        withCredentials: true
+                    });
+                }
+
+                console.log('All words added successfully');
+                navigate('/words');
             } catch (error) {
-                console.error('Failed to delete word list:', error);
-                alert('단어장 삭제에 실패했습니다.');
+                console.error('Error creating word list:', error);
+                if (error.response) {
+                    console.error('Error response:', error.response.data);
+                    console.error('Error status:', error.response.status);
+                    console.error('Error headers:', error.response.headers);
+                } else if (error.request) {
+                    console.error('Error request:', error.request);
+                } else {
+                    console.error('Error message:', error.message);
+                }
+                alert('단어장 생성 중 오류가 발생했습니다.');
             }
+        } else {
+            console.log('Form validation failed');
+            alert('단어장 이름을 입력하고 최소 한 개의 단어를 추가해주세요.');
         }
     };
 
-    const editWordList = (id) => {
-        navigate(`/edit-wordlist/${id}`);
-    };
+    console.log('Rendering CreateWordList. User:', user, 'IsLoading:', isLoading);
 
-    const filteredLists = wordLists
-        .filter(list => list.title.toLowerCase().includes(searchTerm.toLowerCase()))
-        .sort((a, b) => {
-            if (sortOrder === 'asc') {
-                return a.title.localeCompare(b.title);
-            } else {
-                return b.title.localeCompare(a.title);
-            }
-        });
+    if (isLoading) {
+        return <div>로딩 중...</div>;
+    }
 
     return (
-        <div className="word-list-page">
-            <div className="page-header">
-                <h1 className="page-title">{showPublicLists ? '공개 단어장 목록' : '내 단어장 목록'}</h1>
-                <div className="search-bar">
-                    <FontAwesomeIcon icon={faSearch} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="단어장 검색..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-input"
-                    />
-                </div>
-                <div className="page-actions">
-                    <button onClick={() => setIsGridView(!isGridView)} className="view-toggle-btn" title={isGridView ? "리스트 뷰로 전환" : "그리드 뷰로 전환"}>
-                        <FontAwesomeIcon icon={isGridView ? faList : faThLarge} />
-                    </button>
-                    <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="sort-btn" title="정렬 순서 변경">
-                        <FontAwesomeIcon icon={sortOrder === 'asc' ? faSortAlphaDown : faSortAlphaUp} />
-                    </button>
-                    <button onClick={() => setShowPublicLists(!showPublicLists)} className="toggle-public-btn" title={showPublicLists ? "내 단어장 보기" : "공개 단어장 보기"}>
-                        <FontAwesomeIcon icon={showPublicLists ? faUser : faGlobe} />
-                        {showPublicLists ? ' 내 단어장' : ' 공개 단어장'}
-                    </button>
-                    {!showPublicLists && (
-                        <Link to="/create-wordlist" className="create-list-btn">
-                            <FontAwesomeIcon icon={faPlus} /> 새 단어장 만들기
-                        </Link>
+        <div className="create-wordlist card fade-in">
+            <h2 className="create-wordlist-title">새 단어장 만들기</h2>
+            {user ? (
+                <form onSubmit={handleSubmit} className="create-wordlist-form">
+                    <div className="form-group">
+                        <label htmlFor="listName">단어장 이름</label>
+                        <input
+                            type="text"
+                            id="listName"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="단어장 이름을 입력하세요"
+                            required
+                            className="create-wordlist-input"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>새 단어 추가</label>
+                        <div className="word-input-container">
+                            <input
+                                type="text"
+                                value={currentText}
+                                onChange={(e) => setCurrentText(e.target.value)}
+                                placeholder="단어"
+                                className="create-wordlist-input"
+                            />
+                            <input
+                                type="text"
+                                value={currentTranstext}
+                                onChange={(e) => setCurrentTranstext(e.target.value)}
+                                placeholder="의미"
+                                className="create-wordlist-input"
+                            />
+                            <input
+                                type="text"
+                                value={currentSampleSentence}
+                                onChange={(e) => setCurrentSampleSentence(e.target.value)}
+                                placeholder="예문 (선택사항)"
+                                className="create-wordlist-input"
+                            />
+                            <button type="button" onClick={addWord} className="button add-word-btn">
+                                추가
+                            </button>
+                        </div>
+                    </div>
+                    {words.length > 0 && (
+                        <div className="word-list-container">
+                            <h3>추가된 단어 목록</h3>
+                            <ul className="word-list">
+                                {words.map((word, index) => (
+                                    <li key={index} className="word-item">
+                                        <span className="word-text">{word.text}</span>
+                                        <span className="word-definition">{word.transtext}</span>
+                                        {word.sampleSentence && <span className="word-sample">{word.sampleSentence}</span>}
+                                        <button type="button" onClick={() => removeWord(index)} className="button remove-word-btn">
+                                            삭제
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     )}
-                </div>
-            </div>
-            {error && (
-                <div className="error-message">
-                    <p>{error}</p>
-                    <button onClick={fetchWordLists}>다시 시도</button>
-                </div>
-            )}
-            {loading ? (
-                <div className="loading-spinner">로딩 중...</div>
+                    <button type="submit" className="button create-wordlist-button submit-button">
+                        단어장 생성
+                    </button>
+                </form>
             ) : (
-                <div className={`word-list-container ${isGridView ? 'grid-view' : 'list-view'}`}>
-                    {filteredLists.length === 0 ? (
-                        <p className="no-lists-message">
-                            {searchTerm ? '검색 결과가 없습니다.' : (showPublicLists ? '공개된 단어장이 없습니다.' : '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!')}
-                        </p>
-                    ) : (
-                        filteredLists.map((list) => (
-                            <div key={list.id} className="word-list-item">
-                                <div className="word-list-content">
-                                    <h3 className="word-list-title">{list.title}</h3>
-                                    <p className="word-list-count">{list.wordCount} 단어</p>
-                                    <p className="word-list-author">작성자: {list.author}</p>
-                                    {!showPublicLists && !list.isPublic && <p className="word-list-private">비공개</p>}
-                                </div>
-                                <div className="word-list-actions">
-                                    <Link to={`/flashcard/${list.id}`} className="action-btn flashcard-link" title="학습하기">
-                                        <FontAwesomeIcon icon={faPlay} />
-                                        <span className="tooltip">학습하기</span>
-                                    </Link>
-                                    {!showPublicLists && (
-                                        <>
-                                            <button onClick={() => editWordList(list.id)} className="action-btn edit-btn" title="수정하기">
-                                                <FontAwesomeIcon icon={faEdit} />
-                                                <span className="tooltip">수정하기</span>
-                                            </button>
-                                            <button onClick={() => deleteWordList(list.id)} className="action-btn delete-btn" title="삭제하기">
-                                                <FontAwesomeIcon icon={faTrash} />
-                                                <span className="tooltip">삭제하기</span>
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                <div>로그인이 필요합니다. <button onClick={() => navigate('/')}>홈으로 이동</button></div>
             )}
         </div>
     );
 }
 
-export default WordListPage;
+export default CreateWordList;

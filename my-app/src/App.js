@@ -61,13 +61,16 @@ function AppWithAuth() {
 
     const handleLogout = async () => {
         try {
-            await api.post('/api/users/logout');
+            // GET 요청으로 변경하고 캐싱 방지를 위한 타임스탬프 추가
+            await api.get(`/api/users/logout?_=${new Date().getTime()}`);
             setUser(null);
+            // 로컬 스토리지 클리어
+            localStorage.clear();
             navigate('/');
             toast.success('로그아웃되었습니다.');
         } catch (error) {
-            console.error('Logout failed:', error);
-            toast.error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
+            console.error('로그아웃 실패:', error.response ? error.response.data : error.message);
+            toast.error(`로그아웃에 실패했습니다: ${error.response ? error.response.data : error.message}`);
         }
     };
 
@@ -91,7 +94,6 @@ function AppWithAuth() {
                         <Route path="/flashcard/:id" element={<FlashcardView />} />
                         <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
                         <Route path="/words" element={<WordListPage user={user} />} />
-                        {/* Add more routes as needed */}
                     </Routes>
                 </main>
             </div>
