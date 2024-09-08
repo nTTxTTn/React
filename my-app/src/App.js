@@ -14,6 +14,7 @@ import './App.css';
 import FlashcardView from "./FlashcardView";
 import WordListDetail from "./WordListDetail";
 import WordListPage from "./WordListPage";
+import EditWordList from "./EditWordList";
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -43,30 +44,37 @@ function AppWithAuth() {
     const checkLoginStatus = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/api/users');
+            const response = await api.get('/api/users/myuserdata');
             setUser(response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
-            if (error.response && error.response.status === 401) {
-                setUser(null);
-            }
+            setUser(null);
         } finally {
             setLoading(false);
         }
     };
 
     const handleLogin = () => {
-        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
+        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
     };
 
     const handleLogout = async () => {
         try {
-            // GET 요청으로 변경하고 캐싱 방지를 위한 타임스탬프 추가
             await api.get(`/api/users/logout?_=${new Date().getTime()}`);
             setUser(null);
-            // 로컬 스토리지 클리어
             localStorage.clear();
-            navigate('/');
+            sessionStorage.clear();
+
+            const googleLogoutUrl = "https://accounts.google.com/Logout";
+            const googleLogoutWindow = window.open(googleLogoutUrl, '_blank', 'width=1,height=1');
+
+            setTimeout(() => {
+                if (googleLogoutWindow) {
+                    googleLogoutWindow.close();
+                }
+                window.location.href = window.location.origin;
+            }, 2000);
+
             toast.success('로그아웃되었습니다.');
         } catch (error) {
             console.error('로그아웃 실패:', error.response ? error.response.data : error.message);
@@ -94,6 +102,7 @@ function AppWithAuth() {
                         <Route path="/flashcard/:id" element={<FlashcardView />} />
                         <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
                         <Route path="/words" element={<WordListPage user={user} />} />
+                        <Route path="/edit-wordlist/:id" element={<EditWordList />} />
                     </Routes>
                 </main>
             </div>

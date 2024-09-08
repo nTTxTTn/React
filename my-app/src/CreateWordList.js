@@ -48,6 +48,7 @@ function CreateWordList({ user }) {
         }
 
         if (title && words.length > 0) {
+            setIsLoading(true);
             try {
                 // 단어장 생성 (title만 포함)
                 const newWordList = { title: title };
@@ -60,16 +61,14 @@ function CreateWordList({ user }) {
                 // 단어 추가
                 const wordListId = response.data.id;
                 console.log('Adding words to word list ID:', wordListId);
-                for (let word of words) {
-                    console.log('Adding word:', word);
-                    await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}/word`, {
-                        text: word.text,
-                        transtext: word.transtext,
-                        sampleSentence: word.sampleSentence
-                    }, {
-                        withCredentials: true
-                    });
-                }
+                const wordsToAdd = words.map(word => ({
+                    text: word.text,
+                    transtext: word.transtext,
+                    sampleSentence: word.sampleSentence
+                }));
+                await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}/word`, wordsToAdd, {
+                    withCredentials: true
+                });
 
                 console.log('All words added successfully');
                 navigate('/words');
@@ -84,7 +83,9 @@ function CreateWordList({ user }) {
                 } else {
                     console.error('Error message:', error.message);
                 }
-                alert('단어장 생성 중 오류가 발생했습니다.');
+                alert('단어장 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+            } finally {
+                setIsLoading(false);
             }
         } else {
             console.log('Form validation failed');
