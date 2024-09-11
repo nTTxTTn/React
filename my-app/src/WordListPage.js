@@ -28,28 +28,33 @@ function WordListPage({ user }) {
         try {
             setError(null);
             setLoading(true);
-            const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
+            let endpoint;
+            if (user && !showPublicLists) {
+                endpoint = '/api/uservocalist'; // 사용자의 개인 단어장
+            } else {
+                endpoint = '/api/vocalist'; // 공개 단어장
+            }
             console.log(`Fetching word lists from: ${endpoint}`);
             const response = await api.get(endpoint);
             const lists = response.data;
 
             let processedLists;
-            if (showPublicLists) {
+            if (showPublicLists || !user) {
                 processedLists = lists.map(item => ({
                     id: item.id,
                     title: item.title || '제목 없음',
                     wordCount: item.count,
                     author: item.email,
-                    isPublic: item.secret === 1,
+                    isPublic: item.secret === 1,  // 1 means public, 0 means private
                     userName: item.email.split('@')[0]
-                }));
+                })).filter(list => list.isPublic); // 공개 단어장만 표시
             } else {
                 processedLists = lists.map(item => ({
                     id: item.vocaListEntity.id,
                     title: item.vocaListEntity.title || '제목 없음',
                     wordCount: item.vocaListEntity.count,
                     author: item.vocaListEntity.email,
-                    isPublic: item.vocaListEntity.secret === 1,
+                    isPublic: item.vocaListEntity.secret === 1,  // 1 means public, 0 means private
                     userName: item.userEntity.name
                 }));
             }
