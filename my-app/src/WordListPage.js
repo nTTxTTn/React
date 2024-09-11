@@ -28,33 +28,30 @@ function WordListPage({ user }) {
         try {
             setError(null);
             setLoading(true);
-            let endpoint;
-            if (user && !showPublicLists) {
-                endpoint = '/api/uservocalist'; // 사용자의 개인 단어장
-            } else {
-                endpoint = '/api/vocalist'; // 공개 단어장
-            }
+            const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
             console.log(`Fetching word lists from: ${endpoint}`);
             const response = await api.get(endpoint);
             const lists = response.data;
 
             let processedLists;
             if (showPublicLists || !user) {
-                processedLists = lists.map(item => ({
-                    id: item.id,
-                    title: item.title || '제목 없음',
-                    wordCount: item.count,
-                    author: item.email,
-                    isPublic: item.secret === 1,  // 1 means public, 0 means private
-                    userName: item.email.split('@')[0]
-                })).filter(list => list.isPublic); // 공개 단어장만 표시
+                processedLists = lists
+                    .filter(item => item.secret === 1)  // 공개 단어장만 필터링 (secret이 1인 경우)
+                    .map(item => ({
+                        id: item.id,
+                        title: item.title || '제목 없음',
+                        wordCount: item.count,
+                        author: item.email,
+                        isPublic: true,
+                        userName: item.email.split('@')[0]
+                    }));
             } else {
                 processedLists = lists.map(item => ({
                     id: item.vocaListEntity.id,
                     title: item.vocaListEntity.title || '제목 없음',
                     wordCount: item.vocaListEntity.count,
                     author: item.vocaListEntity.email,
-                    isPublic: item.vocaListEntity.secret === 1,  // 1 means public, 0 means private
+                    isPublic: item.vocaListEntity.secret === 1,
                     userName: item.userEntity.name
                 }));
             }
