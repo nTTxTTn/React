@@ -28,39 +28,34 @@ function WordListPage({ user }) {
         try {
             setError(null);
             setLoading(true);
-            const endpoint = showPublicLists ? '/api/vocalist' : '/api/uservocalist';
+            const endpoint = user && !showPublicLists ? '/api/uservocalist' : '/api/vocalist';
             console.log(`Fetching word lists from: ${endpoint}`);
             const response = await api.get(endpoint);
             const lists = response.data;
 
-            let processedLists;
-            if (showPublicLists) {
-                processedLists = lists
-                    .filter(item => item.secret === 1)
-                    .map(item => ({
-                        id: item.id,
-                        title: item.title || '제목 없음',
-                        wordCount: item.count,
-                        author: item.email,
-                        isPublic: true,
-                        userName: item.email.split('@')[0]
-                    }));
-            } else {
-                processedLists = lists.map(item => ({
-                    id: item.vocaListEntity.id,
-                    title: item.vocaListEntity.title || '제목 없음',
-                    wordCount: item.vocaListEntity.count,
-                    author: item.vocaListEntity.email,
-                    isPublic: item.vocaListEntity.secret === 1,
-                    userName: item.userEntity.name
-                }));
+            if (!Array.isArray(lists)) {
+                throw new Error('Received data is not an array');
             }
 
-            console.log(`Fetched ${processedLists.length} word lists`);
-            console.log(`Public lists: ${processedLists.filter(list => list.isPublic).length}`);
-            console.log(`Private lists: ${processedLists.filter(list => !list.isPublic).length}`);
+            const processedLists = lists.map(item => ({
+                id: item.id,
+                title: item.title || '제목 없음',
+                wordCount: item.count,
+                author: item.email,
+                isPublic: item.secret === 1,
+                userName: item.email.split('@')[0]
+            }));
 
-            setWordLists(processedLists);
+            console.log(`Fetched ${processedLists.length} word lists`);
+
+            // Filter lists based on user login status and showPublicLists state
+            const filteredLists = user
+                ? (showPublicLists
+                    ? processedLists.filter(list => list.isPublic)
+                    : processedLists.filter(list => list.author === user.email))
+                : processedLists.filter(list => list.isPublic);
+
+            setWordLists(filteredLists);
         } catch (error) {
             console.error('Failed to fetch word lists:', error);
             setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
@@ -98,7 +93,7 @@ function WordListPage({ user }) {
     return (
         <div className="word-list-page">
             <div className="page-header">
-                <h1 className="page-title">{showPublicLists ? '공개 단어장 목록' : '내 단어장 목록'}</h1>
+                <h1 className="page-title">{user && !showPublicLists ? '내 단어장 목록' : '공개 단어장 목록'}</h1>
                 <div className="search-bar">
                     <FontAwesomeIcon icon={faSearch} className="search-icon" />
                     <input
@@ -141,7 +136,7 @@ function WordListPage({ user }) {
                 <div className={`word-list-container ${isGridView ? 'grid-view' : 'list-view'}`}>
                     {filteredLists.length === 0 ? (
                         <p className="no-lists-message">
-                            {searchTerm ? '검색 결과가 없습니다.' : (showPublicLists ? '공개된 단어장이 없습니다.' : '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!')}
+                            {searchTerm ? '검색 결과가 없습니다.' : (user && !showPublicLists ? '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!' : '공개된 단어장이 없습니다.')}
                         </p>
                     ) : (
                         filteredLists.map((list) => (
