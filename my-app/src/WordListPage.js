@@ -15,7 +15,7 @@ function WordListPage({ user }) {
     const [isGridView, setIsGridView] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
-    const [showPublicLists, setShowPublicLists] = useState(!user);
+    const [showPublicLists, setShowPublicLists] = useState(true);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -34,9 +34,9 @@ function WordListPage({ user }) {
             const lists = response.data;
 
             let processedLists;
-            if (showPublicLists || !user) {
+            if (showPublicLists) {
                 processedLists = lists
-                    .filter(item => item.secret === 1)  // 공개 단어장만 필터링 (secret이 1인 경우)
+                    .filter(item => item.secret === 1)
                     .map(item => ({
                         id: item.id,
                         title: item.title || '제목 없음',
