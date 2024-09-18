@@ -1,14 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateWordList.css';
 import axios from 'axios';
+import { UserContext } from './App';
 
-axios.interceptors.request.use(request => {
-    console.log('Starting Request', JSON.stringify(request, null, 2))
-    return request
-})
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true
+});
 
-function CreateWordList({ user }) {
+// 요청 인터셉터 추가
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        console.log('Starting Request', JSON.stringify(config, null, 2))
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+function CreateWordList() {
+    const { user } = useContext(UserContext);
     const [title, setTitle] = useState('');
     const [words, setWords] = useState([]);
     const [currentText, setCurrentText] = useState('');
@@ -19,8 +36,17 @@ function CreateWordList({ user }) {
 
     useEffect(() => {
         console.log('CreateWordList component mounted. User:', user);
-        setIsLoading(false);
+        if (user) {
+            setIsLoading(false);
+        } else {
+            redirectToLogin();
+        }
     }, [user]);
+
+    const redirectToLogin = () => {
+        const loginUrl = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
+        window.location.href = loginUrl;
+    };
 
     const addWord = () => {
         if (currentText && currentTranstext) {
@@ -42,23 +68,19 @@ function CreateWordList({ user }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!user) {
-            console.log('Attempt to submit without user, redirecting to home page');
-            navigate('/');
+            console.log('User not logged in, redirecting to Google login');
+            redirectToLogin();
             return;
         }
 
         if (title && words.length > 0) {
             setIsLoading(true);
             try {
-                // 단어장 생성 (title만 포함)
                 const newWordList = { title: title };
                 console.log('Sending request to create word list:', newWordList);
-                const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocalist`, newWordList, {
-                    withCredentials: true
-                });
+                const response = await api.post('/api/vocalist', newWordList);
                 console.log('New word list created:', response.data);
 
-                // 단어 추가
                 const wordListId = response.data.id;
                 console.log('Adding words to word list ID:', wordListId);
                 const wordsToAdd = words.map(word => ({
@@ -66,9 +88,7 @@ function CreateWordList({ user }) {
                     transtext: word.transtext,
                     sampleSentence: word.sampleSentence
                 }));
-                await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/vocacontent/${wordListId}/word`, wordsToAdd, {
-                    withCredentials: true
-                });
+                await api.post(`/api/vocacontent/${wordListId}/word`, wordsToAdd);
 
                 console.log('All words added successfully');
                 navigate('/words');
@@ -78,6 +98,10 @@ function CreateWordList({ user }) {
                     console.error('Error response:', error.response.data);
                     console.error('Error status:', error.response.status);
                     console.error('Error headers:', error.response.headers);
+                    if (error.response.status === 401) {
+                        console.log('Authentication failed. Redirecting to Google login.');
+                        redirectToLogin();
+                    }
                 } else if (error.request) {
                     console.error('Error request:', error.request);
                 } else {
@@ -167,7 +191,10 @@ function CreateWordList({ user }) {
                     </button>
                 </form>
             ) : (
-                <div>로그인이 필요합니다. <button onClick={() => navigate('/')}>홈으로 이동</button></div>
+                <div>
+                    로그인이 필요합니다.
+                    <button onClick={redirectToLogin}>Google로 로그인</button>
+                </div>
             )}
         </div>
     );
