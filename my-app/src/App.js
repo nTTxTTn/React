@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, createContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,13 +10,15 @@ import AppContent from './AppContent';
 import LoadingSpinner from './LoadingSpinner';
 import AuthCallback from './AuthCallback';
 import CreateWordList from './CreateWordList';
-import './App.css';
 import FlashcardView from "./FlashcardView";
 import WordListDetail from "./WordListDetail";
 import WordListPage from "./WordListPage";
 import EditWordList from "./EditWordList";
 import QuizPage from "./QuizPage";
 import QuizResult from "./QuizResult";
+import './App.css';
+
+export const UserContext = createContext(null);
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -24,20 +26,8 @@ const api = axios.create({
 });
 
 function App() {
-    return (
-        <ThemeProvider>
-            <Router>
-                <AppWithAuth />
-                <ToastContainer />
-            </Router>
-        </ThemeProvider>
-    );
-}
-
-function AppWithAuth() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
     useEffect(() => {
         checkLoginStatus();
@@ -88,29 +78,43 @@ function AppWithAuth() {
         return <LoadingSpinner />;
     }
 
+    const ProtectedRoute = ({ children }) => {
+        if (!user) {
+            return <Navigate to="/login" />;
+        }
+        return children;
+    };
+
     return (
-        <div className="app-container">
-            <header className="app-header">
-                <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
-            </header>
-            <div className="app-body">
-                <Sidebar user={user} />
-                <main className="main-content">
-                    <Routes>
-                        <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
-                        <Route path="/" element={<AppContent user={user} api={api} />} />
-                        <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
-                        <Route path="/create-wordlist" element={<CreateWordList user={user} />} />
-                        <Route path="/flashcard/:id" element={<FlashcardView />} />
-                        <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
-                        <Route path="/words" element={<WordListPage user={user} />} />
-                        <Route path="/edit-wordlist/:id" element={<EditWordList />} />
-                        <Route path="/quiz" element={<QuizPage user={user} />} />
-                        <Route path="/quiz-result" element={<QuizResult user={user} />} />
-                    </Routes>
-                </main>
-            </div>
-        </div>
+        <ThemeProvider>
+            <UserContext.Provider value={{ user, setUser }}>
+                <Router>
+                    <div className="app-container">
+                        <header className="app-header">
+                            <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
+                        </header>
+                        <div className="app-body">
+                            <Sidebar user={user} />
+                            <main className="main-content">
+                                <Routes>
+                                    <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
+                                    <Route path="/" element={<AppContent user={user} api={api} />} />
+                                    <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
+                                    <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList /></ProtectedRoute>} />
+                                    <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
+                                    <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
+                                    <Route path="/words" element={<WordListPage user={user} />} />
+                                    <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList /></ProtectedRoute>} />
+                                    <Route path="/quiz" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
+                                    <Route path="/quiz-result" element={<ProtectedRoute><QuizResult /></ProtectedRoute>} />
+                                </Routes>
+                            </main>
+                        </div>
+                    </div>
+                    <ToastContainer />
+                </Router>
+            </UserContext.Provider>
+        </ThemeProvider>
     );
 }
 

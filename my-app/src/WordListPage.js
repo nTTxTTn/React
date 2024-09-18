@@ -15,7 +15,7 @@ function WordListPage({ user }) {
     const [isGridView, setIsGridView] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
-    const [showPublicLists, setShowPublicLists] = useState(true);
+    const [showPublicLists, setShowPublicLists] = useState(!user);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -37,23 +37,35 @@ function WordListPage({ user }) {
                 throw new Error('Received data is not an array');
             }
 
-            const processedLists = lists.map(item => ({
-                id: item.id,
-                title: item.title || '제목 없음',
-                wordCount: item.count,
-                author: item.email,
-                isPublic: item.secret === 1,
-                userName: item.email.split('@')[0]
-            }));
+            const processedLists = lists.map(item => {
+                if (endpoint === '/api/uservocalist') {
+                    return {
+                        id: item.vocaListEntity.id,
+                        title: item.vocaListEntity.title || '제목 없음',
+                        wordCount: item.vocaListEntity.count,
+                        author: item.vocaListEntity.email,
+                        isPublic: item.vocaListEntity.secret === 1,
+                        userName: item.userEntity.name || item.vocaListEntity.email.split('@')[0]
+                    };
+                } else {
+                    return {
+                        id: item.id,
+                        title: item.title || '제목 없음',
+                        wordCount: item.count,
+                        author: item.email,
+                        isPublic: item.secret === 1,
+                        userName: item.email.split('@')[0]
+                    };
+                }
+            });
 
             console.log(`Fetched ${processedLists.length} word lists`);
 
-            // Filter lists based on user login status and showPublicLists state
-            const filteredLists = user
-                ? (showPublicLists
-                    ? processedLists.filter(list => list.isPublic)
-                    : processedLists.filter(list => list.author === user.email))
-                : processedLists.filter(list => list.isPublic);
+            // For /api/vocalist, only show public lists
+            // For /api/uservocalist, show all lists as they are all user's own lists
+            const filteredLists = endpoint === '/api/vocalist'
+                ? processedLists.filter(list => list.isPublic)
+                : processedLists;
 
             setWordLists(filteredLists);
         } catch (error) {
@@ -93,7 +105,7 @@ function WordListPage({ user }) {
     return (
         <div className="word-list-page">
             <div className="page-header">
-                <h1 className="page-title">{user && !showPublicLists ? '내 단어장 목록' : '공개 단어장 목록'}</h1>
+                <h1 className="page-title">{showPublicLists ? '공개 단어장 목록' : '내 단어장 목록'}</h1>
                 <div className="search-bar">
                     <FontAwesomeIcon icon={faSearch} className="search-icon" />
                     <input
@@ -136,7 +148,7 @@ function WordListPage({ user }) {
                 <div className={`word-list-container ${isGridView ? 'grid-view' : 'list-view'}`}>
                     {filteredLists.length === 0 ? (
                         <p className="no-lists-message">
-                            {searchTerm ? '검색 결과가 없습니다.' : (user && !showPublicLists ? '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!' : '공개된 단어장이 없습니다.')}
+                            {searchTerm ? '검색 결과가 없습니다.' : (showPublicLists ? '공개된 단어장이 없습니다.' : '아직 생성된 단어장이 없습니다. 새 단어장을 만들어보세요!')}
                         </p>
                     ) : (
                         filteredLists.map((list) => (
