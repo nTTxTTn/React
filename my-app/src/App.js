@@ -52,7 +52,7 @@ function App() {
 
     const handleLogout = async () => {
         try {
-            await api.get(`/api/users/logout?_=${new Date().getTime()}`);
+            await api.get('/logout');
             setUser(null);
             localStorage.clear();
             sessionStorage.clear();

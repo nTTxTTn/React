@@ -28,7 +28,7 @@ function WordListPage({ user }) {
         try {
             setError(null);
             setLoading(true);
-            const endpoint = user && !showPublicLists ? '/api/uservocalist' : '/api/vocalist';
+            const endpoint = user && !showPublicLists ? '/api/uservocalist' : '/api/vocalist/showall';
             console.log(`Fetching word lists from: ${endpoint}`);
             const response = await api.get(endpoint);
             const lists = response.data;
@@ -37,37 +37,23 @@ function WordListPage({ user }) {
                 throw new Error('Received data is not an array');
             }
 
-            const processedLists = lists.map(item => {
-                if (endpoint === '/api/uservocalist') {
-                    return {
-                        id: item.vocaListEntity.id,
-                        title: item.vocaListEntity.title || '제목 없음',
-                        wordCount: item.vocaListEntity.count,
-                        author: item.vocaListEntity.email,
-                        isPublic: item.vocaListEntity.secret === 1,
-                        userName: item.userEntity.name || item.vocaListEntity.email.split('@')[0]
-                    };
-                } else {
-                    return {
-                        id: item.id,
-                        title: item.title || '제목 없음',
-                        wordCount: item.count,
-                        author: item.email,
-                        isPublic: item.secret === 1,
-                        userName: item.email.split('@')[0]
-                    };
-                }
-            });
+            const processedLists = await Promise.all(lists.map(async item => {
+                const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
+                const wordCountResponse = await api.get(`/api/vocacontent/showall/${listData.id}`);
+                const wordCount = wordCountResponse.data.length;
+
+                return {
+                    id: listData.id,
+                    title: listData.title || '제목 없음',
+                    wordCount: wordCount,
+                    author: listData.email,
+                    isPublic: listData.secret === 1, // 1이 공개, 0이 비공개
+                    userName: (endpoint === '/api/uservocalist' ? item.userEntity.name : null) || listData.email.split('@')[0]
+                };
+            }));
 
             console.log(`Fetched ${processedLists.length} word lists`);
-
-            // For /api/vocalist, only show public lists
-            // For /api/uservocalist, show all lists as they are all user's own lists
-            const filteredLists = endpoint === '/api/vocalist'
-                ? processedLists.filter(list => list.isPublic)
-                : processedLists;
-
-            setWordLists(filteredLists);
+            setWordLists(processedLists);
         } catch (error) {
             console.error('Failed to fetch word lists:', error);
             setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
@@ -79,7 +65,7 @@ function WordListPage({ user }) {
     const deleteWordList = async (id) => {
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
             try {
-                await api.delete(`/api/uservocalist/delete/${id}`);
+                await api.delete(`/api/vocalist/delete/${id}`);
                 fetchWordLists();
             } catch (error) {
                 console.error('Failed to delete word list:', error);
@@ -90,6 +76,17 @@ function WordListPage({ user }) {
 
     const editWordList = (id) => {
         navigate(`/edit-wordlist/${id}`);
+    };
+
+    const togglePublic = async (id, isPublic) => {
+        try {
+            const endpoint = isPublic ? `/api/vocalist/${id}/editsecret/close` : `/api/vocalist/${id}/editsecret/open`;
+            await api.get(endpoint);
+            fetchWordLists();
+        } catch (error) {
+            console.error('Failed to toggle public status:', error);
+            alert('단어장 공개 상태 변경에 실패했습니다.');
+        }
     };
 
     const filteredLists = wordLists
@@ -173,6 +170,10 @@ function WordListPage({ user }) {
                                             <button onClick={() => deleteWordList(list.id)} className="action-btn delete-btn" title="삭제하기">
                                                 <FontAwesomeIcon icon={faTrash} />
                                                 <span className="tooltip">삭제하기</span>
+                                            </button>
+                                            <button onClick={() => togglePublic(list.id, list.isPublic)} className="action-btn toggle-public-btn" title={list.isPublic ? "비공개로 전환" : "공개로 전환"}>
+                                                <FontAwesomeIcon icon={list.isPublic ? faUser : faGlobe} />
+                                                <span className="tooltip">{list.isPublic ? "비공개로 전환" : "공개로 전환"}</span>
                                             </button>
                                         </>
                                     )}

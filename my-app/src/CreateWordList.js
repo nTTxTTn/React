@@ -9,7 +9,6 @@ const api = axios.create({
     withCredentials: true
 });
 
-// 요청 인터셉터 추가
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -31,14 +30,14 @@ function CreateWordList() {
     const [currentText, setCurrentText] = useState('');
     const [currentTranstext, setCurrentTranstext] = useState('');
     const [currentSampleSentence, setCurrentSampleSentence] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [vocalistId, setVocalistId] = useState(null);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         console.log('CreateWordList component mounted. User:', user);
-        if (user) {
-            setIsLoading(false);
-        } else {
+        if (!user) {
             redirectToLogin();
         }
     }, [user]);
@@ -48,86 +47,72 @@ function CreateWordList() {
         window.location.href = loginUrl;
     };
 
-    const addWord = () => {
-        if (currentText && currentTranstext) {
-            setWords([...words, {
-                text: currentText,
-                transtext: currentTranstext,
-                sampleSentence: currentSampleSentence || ''
-            }]);
-            setCurrentText('');
-            setCurrentTranstext('');
-            setCurrentSampleSentence('');
-        }
-    };
-
-    const removeWord = (index) => {
-        setWords(words.filter((_, i) => i !== index));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!user) {
-            console.log('User not logged in, redirecting to Google login');
-            redirectToLogin();
+    const createWordList = async () => {
+        if (!title) {
+            setError('단어장 제목을 입력해주세요.');
             return;
         }
+        setIsLoading(true);
+        setError(null);
+        try {
+            console.log('Sending request to create word list:', { title });
+            const response = await api.post('/api/vocalist/create', { title });
+            console.log('Word list creation response:', response.data);
+            if (response.data && response.data.id) {
+                setVocalistId(response.data.id);
+                setError('단어장이 성공적으로 생성되었습니다. 이제 단어를 추가해주세요.');
+            } else {
+                throw new Error('서버 응답에 단어장 ID가 없습니다.');
+            }
+        } catch (error) {
+            console.error('Error creating word list:', error);
+            setError(`단어장 생성에 실패했습니다: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-        if (title && words.length > 0) {
+    const addWord = async () => {
+        if (!vocalistId) {
+            setError('먼저 단어장을 생성해주세요.');
+            return;
+        }
+        if (currentText && currentTranstext) {
             setIsLoading(true);
+            setError(null);
             try {
-                const newWordList = { title: title };
-                console.log('Sending request to create word list:', newWordList);
-                const response = await api.post('/api/vocalist', newWordList);
-                console.log('New word list created:', response.data);
-
-                const wordListId = response.data.id;
-                console.log('Adding words to word list ID:', wordListId);
-                const wordsToAdd = words.map(word => ({
-                    text: word.text,
-                    transtext: word.transtext,
-                    sampleSentence: word.sampleSentence
-                }));
-                await api.post(`/api/vocacontent/${wordListId}/word`, wordsToAdd);
-
-                console.log('All words added successfully');
-                navigate('/words');
+                const newWord = {
+                    text: currentText,
+                    transtext: currentTranstext,
+                    sampleSentence: currentSampleSentence || ''
+                };
+                await api.post(`/api/vocacontent/create/${vocalistId}`, [newWord]);
+                setWords(prevWords => [...prevWords, newWord]);
+                setCurrentText('');
+                setCurrentTranstext('');
+                setCurrentSampleSentence('');
+                setError('단어가 성공적으로 추가되었습니다.');
             } catch (error) {
-                console.error('Error creating word list:', error);
-                if (error.response) {
-                    console.error('Error response:', error.response.data);
-                    console.error('Error status:', error.response.status);
-                    console.error('Error headers:', error.response.headers);
-                    if (error.response.status === 401) {
-                        console.log('Authentication failed. Redirecting to Google login.');
-                        redirectToLogin();
-                    }
-                } else if (error.request) {
-                    console.error('Error request:', error.request);
-                } else {
-                    console.error('Error message:', error.message);
-                }
-                alert('단어장 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+                console.error('Error adding word:', error);
+                setError(`단어 추가에 실패했습니다: ${error.message}`);
             } finally {
                 setIsLoading(false);
             }
         } else {
-            console.log('Form validation failed');
-            alert('단어장 이름을 입력하고 최소 한 개의 단어를 추가해주세요.');
+            setError('단어와 뜻을 모두 입력해주세요.');
         }
     };
 
-    console.log('Rendering CreateWordList. User:', user, 'IsLoading:', isLoading);
-
-    if (isLoading) {
-        return <div>로딩 중...</div>;
-    }
+    const finishWordList = () => {
+        navigate('/words');
+    };
 
     return (
         <div className="create-wordlist card fade-in">
             <h2 className="create-wordlist-title">새 단어장 만들기</h2>
+            {error && <div className="error-message">{error}</div>}
             {user ? (
-                <form onSubmit={handleSubmit} className="create-wordlist-form">
+                <div className="create-wordlist-form">
                     <div className="form-group">
                         <label htmlFor="listName">단어장 이름</label>
                         <input
@@ -138,37 +123,43 @@ function CreateWordList() {
                             placeholder="단어장 이름을 입력하세요"
                             required
                             className="create-wordlist-input"
+                            disabled={vocalistId !== null}
                         />
+                        <button onClick={createWordList} className="button create-wordlist-button" disabled={vocalistId !== null || isLoading}>
+                            {isLoading ? '생성 중...' : '단어장 생성'}
+                        </button>
                     </div>
-                    <div className="form-group">
-                        <label>새 단어 추가</label>
-                        <div className="word-input-container">
-                            <input
-                                type="text"
-                                value={currentText}
-                                onChange={(e) => setCurrentText(e.target.value)}
-                                placeholder="단어"
-                                className="create-wordlist-input"
-                            />
-                            <input
-                                type="text"
-                                value={currentTranstext}
-                                onChange={(e) => setCurrentTranstext(e.target.value)}
-                                placeholder="의미"
-                                className="create-wordlist-input"
-                            />
-                            <input
-                                type="text"
-                                value={currentSampleSentence}
-                                onChange={(e) => setCurrentSampleSentence(e.target.value)}
-                                placeholder="예문 (선택사항)"
-                                className="create-wordlist-input"
-                            />
-                            <button type="button" onClick={addWord} className="button add-word-btn">
-                                추가
-                            </button>
+                    {vocalistId && (
+                        <div className="form-group">
+                            <label>새 단어 추가</label>
+                            <div className="word-input-container">
+                                <input
+                                    type="text"
+                                    value={currentText}
+                                    onChange={(e) => setCurrentText(e.target.value)}
+                                    placeholder="단어"
+                                    className="create-wordlist-input"
+                                />
+                                <input
+                                    type="text"
+                                    value={currentTranstext}
+                                    onChange={(e) => setCurrentTranstext(e.target.value)}
+                                    placeholder="의미"
+                                    className="create-wordlist-input"
+                                />
+                                <input
+                                    type="text"
+                                    value={currentSampleSentence}
+                                    onChange={(e) => setCurrentSampleSentence(e.target.value)}
+                                    placeholder="예문 (선택사항)"
+                                    className="create-wordlist-input"
+                                />
+                                <button onClick={addWord} className="button add-word-btn" disabled={isLoading}>
+                                    {isLoading ? '추가 중...' : '추가'}
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                     {words.length > 0 && (
                         <div className="word-list-container">
                             <h3>추가된 단어 목록</h3>
@@ -178,24 +169,29 @@ function CreateWordList() {
                                         <span className="word-text">{word.text}</span>
                                         <span className="word-definition">{word.transtext}</span>
                                         {word.sampleSentence && <span className="word-sample">{word.sampleSentence}</span>}
-                                        <button type="button" onClick={() => removeWord(index)} className="button remove-word-btn">
-                                            삭제
-                                        </button>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                     )}
-                    <button type="submit" className="button create-wordlist-button submit-button">
-                        단어장 생성
-                    </button>
-                </form>
+                    {vocalistId && (
+                        <button onClick={finishWordList} className="button finish-wordlist-button">
+                            단어장 완성
+                        </button>
+                    )}
+                </div>
             ) : (
                 <div>
                     로그인이 필요합니다.
                     <button onClick={redirectToLogin}>Google로 로그인</button>
                 </div>
             )}
+            {/* 디버깅을 위한 상태 표시 */}
+            <div className="debug-info" style={{marginTop: '20px', fontSize: '12px', color: 'gray'}}>
+                <p>VocaList ID: {vocalistId || 'Not set'}</p>
+                <p>Is Loading: {isLoading.toString()}</p>
+                <p>Word Count: {words.length}</p>
+            </div>
         </div>
     );
 }
