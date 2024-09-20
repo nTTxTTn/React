@@ -47,7 +47,7 @@ function WordListPage({ user }) {
                     title: listData.title || '제목 없음',
                     wordCount: wordCount,
                     author: listData.email,
-                    isPublic: listData.secret === 1, // 1이 공개, 0이 비공개
+                    isPublic: listData.secret === 1,
                     userName: (endpoint === '/api/uservocalist' ? item.userEntity.name : null) || listData.email.split('@')[0]
                 };
             }));
@@ -76,15 +76,7 @@ function WordListPage({ user }) {
 
     const editWordList = (id) => {
         console.log('Edit button clicked for list ID:', id);
-        const path = `/edit-wordlist/${id}`;
-        console.log('Attempting to navigate to:', path);
-        navigate(path);
-        console.log('Navigate function called');
-
-        // 추가: 약간의 지연 후 현재 URL 확인
-        setTimeout(() => {
-            console.log('Current URL after navigation:', window.location.href);
-        }, 100);
+        navigate(`/edit-wordlist/${id}`);
     };
 
     const togglePublic = async (id, isPublic) => {
@@ -173,11 +165,7 @@ function WordListPage({ user }) {
                                     {user && user.email === list.author && !showPublicLists && (
                                         <>
                                             <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();  // 추가: 기본 동작 방지
-                                                    console.log('Edit button clicked for list ID:', list.id);
-                                                    editWordList(list.id);
-                                                }}
+                                                onClick={() => editWordList(list.id)}
                                                 className="action-btn edit-btn"
                                                 title="수정하기"
                                             >
