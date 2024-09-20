@@ -12,17 +12,6 @@ const api = axios.create({
     }
 });
 
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response && error.response.status === 401) {
-            // 로그인 페이지로 리다이렉트
-            window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
-        }
-        return Promise.reject(error);
-    }
-);
-
 function CreateWordList() {
     const { user, setUser } = useContext(UserContext);
     const [title, setTitle] = useState('');
@@ -31,6 +20,7 @@ function CreateWordList() {
     const [isLoading, setIsLoading] = useState(false);
     const [vocalistId, setVocalistId] = useState(null);
     const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [step, setStep] = useState('create');
     const navigate = useNavigate();
 
@@ -53,14 +43,15 @@ function CreateWordList() {
         }
         setIsLoading(true);
         setError(null);
+        setSuccessMessage(null);
         try {
             console.log('Sending request to create word list:', { title });
-            const response = await api.post('/api/vocalist/create', JSON.stringify({ title }));
+            const response = await api.post('/api/vocalist/create', { title });
             console.log('Word list creation response:', response.data);
             if (response.data && response.data.id) {
                 setVocalistId(response.data.id);
                 setStep('add');
-                setError(null);
+                setSuccessMessage('단어장이 성공적으로 생성되었습니다.');
             } else {
                 throw new Error('서버 응답에 단어장 ID가 없습니다.');
             }
@@ -82,6 +73,7 @@ function CreateWordList() {
         }
         setIsLoading(true);
         setError(null);
+        setSuccessMessage(null);
         try {
             const newWord = {
                 text: currentWord.text,
@@ -89,12 +81,12 @@ function CreateWordList() {
                 sampleSentence: currentWord.sampleSentence || ''
             };
             console.log('Sending request to add word:', newWord);
-            const response = await api.post(`/api/vocacontent/create/${vocalistId}`, JSON.stringify(newWord));
+            const response = await api.post(`/api/vocacontent/create/${vocalistId}`, newWord);
             console.log('Word addition response:', response.data);
-            if (response.data && response.data.length > 0) {
-                setWords(prevWords => [...prevWords, response.data[0]]);
+            if (response.data && response.data.id) {
+                setWords(prevWords => [...prevWords, response.data]);
                 setCurrentWord({ text: '', transtext: '', sampleSentence: '' });
-                setError('단어가 성공적으로 추가되었습니다.');
+                setSuccessMessage('단어가 성공적으로 추가되었습니다.');
             } else {
                 throw new Error('서버 응답에 추가된 단어 정보가 없습니다.');
             }
@@ -135,6 +127,7 @@ function CreateWordList() {
         <div className="create-wordlist card fade-in">
             <h2 className="create-wordlist-title">새 단어장 만들기</h2>
             {error && <div className="error-message">{error}</div>}
+            {successMessage && <div className="success-message">{successMessage}</div>}
             <div className="create-wordlist-form">
                 {step === 'create' && (
                     <div className="form-group">

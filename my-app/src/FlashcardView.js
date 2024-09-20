@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faArrowLeft, faRedo, faVolumeUp, faArrowRight, faQuestionCircle, faStop } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
 import './FlashcardView.css';
+
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true
+});
 
 function FlashcardView() {
     const [wordList, setWordList] = useState(null);
@@ -12,14 +18,29 @@ function FlashcardView() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const loadedLists = JSON.parse(localStorage.getItem('wordLists') || '[]');
-        const currentList = loadedLists.find(list => list.id === parseInt(id));
-        if (currentList) {
-            setWordList(currentList);
-        } else {
+        fetchWordList();
+    }, [id]);
+
+    const fetchWordList = async () => {
+        try {
+            const response = await api.get(`/api/vocalist/${id}`);
+            const wordListData = response.data;
+            const wordsResponse = await api.get(`/api/vocacontent/showall/${id}`);
+            const wordsData = wordsResponse.data;
+            setWordList({
+                title: wordListData.title,
+                words: wordsData.map(word => ({
+                    id: word.id,
+                    text: word.text,
+                    transtext: word.transtext,
+                    sampleSentence: word.sampleSentence
+                }))
+            });
+        } catch (error) {
+            console.error('Failed to fetch word list:', error);
             navigate('/words');
         }
-    }, [id, navigate]);
+    };
 
     const handleFlip = () => setIsFlipped(!isFlipped);
 
@@ -61,18 +82,19 @@ function FlashcardView() {
 
     return (
         <div className="flashcard-view">
-            <h1 className="flashcard-title">{wordList.name}</h1>
+            <h1 className="flashcard-title">{wordList.title}</h1>
             <div className="flashcard-container">
                 <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
                     <div className="flashcard-front">
-                        <p>{wordList.words[currentIndex].word}</p>
+                        <p>{wordList.words[currentIndex].text}</p>
                         <div className="flashcard-tooltip">
                             <FontAwesomeIcon icon={faQuestionCircle} />
                             <span className="tooltip-text">클릭하면 뜻이 보입니다</span>
                         </div>
                     </div>
                     <div className="flashcard-back">
-                        <p>{wordList.words[currentIndex].definition}</p>
+                        <p>{wordList.words[currentIndex].transtext}</p>
+                        <p className="sample-sentence">{wordList.words[currentIndex].sampleSentence}</p>
                     </div>
                 </div>
             </div>
@@ -83,7 +105,7 @@ function FlashcardView() {
                 <button onClick={handleRestart} className="control-btn restart-btn">
                     <FontAwesomeIcon icon={faRedo} /> 처음부터
                 </button>
-                <button onClick={() => speakWord(wordList.words[currentIndex].word)} className="control-btn speak-btn">
+                <button onClick={() => speakWord(wordList.words[currentIndex].text)} className="control-btn speak-btn">
                     <FontAwesomeIcon icon={faVolumeUp} /> 발음 듣기
                 </button>
                 <button onClick={handleNext} className="control-btn next-btn">

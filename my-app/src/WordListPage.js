@@ -75,7 +75,16 @@ function WordListPage({ user }) {
     };
 
     const editWordList = (id) => {
-        navigate(`/edit-wordlist/${id}`);
+        console.log('Edit button clicked for list ID:', id);
+        const path = `/edit-wordlist/${id}`;
+        console.log('Attempting to navigate to:', path);
+        navigate(path);
+        console.log('Navigate function called');
+
+        // 추가: 약간의 지연 후 현재 URL 확인
+        setTimeout(() => {
+            console.log('Current URL after navigation:', window.location.href);
+        }, 100);
     };
 
     const togglePublic = async (id, isPublic) => {
@@ -163,7 +172,15 @@ function WordListPage({ user }) {
                                     </Link>
                                     {user && user.email === list.author && !showPublicLists && (
                                         <>
-                                            <button onClick={() => editWordList(list.id)} className="action-btn edit-btn" title="수정하기">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();  // 추가: 기본 동작 방지
+                                                    console.log('Edit button clicked for list ID:', list.id);
+                                                    editWordList(list.id);
+                                                }}
+                                                className="action-btn edit-btn"
+                                                title="수정하기"
+                                            >
                                                 <FontAwesomeIcon icon={faEdit} />
                                                 <span className="tooltip">수정하기</span>
                                             </button>

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, createContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
-import AppContent from './AppContent';
 import LoadingSpinner from './LoadingSpinner';
 import AuthCallback from './AuthCallback';
+import HomePage from './HomePage';
 import CreateWordList from './CreateWordList';
 import FlashcardView from "./FlashcardView";
 import WordListDetail from "./WordListDetail";
@@ -25,9 +25,10 @@ const api = axios.create({
     withCredentials: true
 });
 
-function App() {
+function AppContent() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         checkLoginStatus();
@@ -38,6 +39,8 @@ function App() {
             setLoading(true);
             const response = await api.get('/api/users/myuserdata');
             setUser(response.data);
+            console.log('Current user:', response.data);
+            navigate('/');
         } catch (error) {
             console.error('Failed to fetch user data:', error);
             setUser(null);
@@ -64,7 +67,7 @@ function App() {
                 if (googleLogoutWindow) {
                     googleLogoutWindow.close();
                 }
-                window.location.href = window.location.origin;
+                navigate('/');
             }, 2000);
 
             toast.success('로그아웃되었습니다.');
@@ -79,6 +82,7 @@ function App() {
     }
 
     const ProtectedRoute = ({ children }) => {
+        console.log('ProtectedRoute rendered, user:', user);
         if (!user) {
             return <Navigate to="/login" />;
         }
@@ -86,34 +90,40 @@ function App() {
     };
 
     return (
+        <UserContext.Provider value={{ user, setUser }}>
+            <div className="app-container">
+                <header className="app-header">
+                    <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
+                </header>
+                <div className="app-body">
+                    <Sidebar />
+                    <main className="main-content">
+                        <Routes>
+                            <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
+                            <Route path="/" element={<HomePage user={user} />} />
+                            <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
+                            <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList user={user} /></ProtectedRoute>} />
+                            <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
+                            <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
+                            <Route path="/words" element={<WordListPage user={user} />} />
+                            <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList user={user} /></ProtectedRoute>} />
+                            <Route path="/quiz" element={<ProtectedRoute><QuizPage user={user} /></ProtectedRoute>} />
+                            <Route path="/quiz-result" element={<ProtectedRoute><QuizResult user={user} /></ProtectedRoute>} />
+                        </Routes>
+                    </main>
+                </div>
+            </div>
+            <ToastContainer />
+        </UserContext.Provider>
+    );
+}
+
+function App() {
+    return (
         <ThemeProvider>
-            <UserContext.Provider value={{ user, setUser }}>
-                <Router>
-                    <div className="app-container">
-                        <header className="app-header">
-                            <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
-                        </header>
-                        <div className="app-body">
-                            <Sidebar user={user} />
-                            <main className="main-content">
-                                <Routes>
-                                    <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
-                                    <Route path="/" element={<AppContent user={user} api={api} />} />
-                                    <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} />} />
-                                    <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList /></ProtectedRoute>} />
-                                    <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
-                                    <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
-                                    <Route path="/words" element={<WordListPage user={user} />} />
-                                    <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList /></ProtectedRoute>} />
-                                    <Route path="/quiz" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
-                                    <Route path="/quiz-result" element={<ProtectedRoute><QuizResult /></ProtectedRoute>} />
-                                </Routes>
-                            </main>
-                        </div>
-                    </div>
-                    <ToastContainer />
-                </Router>
-            </UserContext.Provider>
+            <Router>
+                <AppContent />
+            </Router>
         </ThemeProvider>
     );
 }

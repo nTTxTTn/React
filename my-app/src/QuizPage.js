@@ -1,24 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faList, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faList, faPencilAlt, faUser, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import QuizingPage from './QuizingPage';
 import './QuizPage.css';
 
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true
+});
+
 function QuizPage() {
-    const [selectedLists, setSelectedLists] = useState([]);
+    const [wordLists, setWordLists] = useState([]);
     const [quizStarted, setQuizStarted] = useState(false);
     const [quizType, setQuizType] = useState('multipleChoice');
     const [quizLength, setQuizLength] = useState(5);
+    const [showPublicLists, setShowPublicLists] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const wordLists = JSON.parse(localStorage.getItem('wordLists') || '[]');
-        setSelectedLists(wordLists.map(list => ({ ...list, selected: false })));
-    }, []);
+        fetchWordLists();
+    }, [showPublicLists]);
+
+    const fetchWordLists = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const endpoint = showPublicLists ? '/api/vocalist/showall' : '/api/uservocalist';
+            const response = await api.get(endpoint);
+            const lists = response.data;
+
+            const processedLists = await Promise.all(lists.map(async item => {
+                const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
+                const wordsResponse = await api.get(`/api/vocacontent/showall/${listData.id}`);
+                return {
+                    id: listData.id,
+                    title: listData.title || '제목 없음',
+                    words: wordsResponse.data,
+                    selected: false
+                };
+            }));
+
+            setWordLists(processedLists);
+        } catch (error) {
+            console.error('Failed to fetch word lists:', error);
+            setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const toggleListSelection = (id) => {
-        setSelectedLists(prevLists =>
+        setWordLists(prevLists =>
             prevLists.map(list =>
                 list.id === id ? { ...list, selected: !list.selected } : list
             )
@@ -26,7 +62,7 @@ function QuizPage() {
     };
 
     const startQuiz = () => {
-        const selectedWords = selectedLists
+        const selectedWords = wordLists
             .filter(list => list.selected)
             .flatMap(list => list.words);
 
@@ -44,10 +80,13 @@ function QuizPage() {
             state: {
                 score: score,
                 totalQuestions: totalQuestions,
-                selectedLists: selectedLists.filter(list => list.selected).map(list => list.name)
+                selectedLists: wordLists.filter(list => list.selected).map(list => list.title)
             }
         });
     };
+
+    if (loading) return <div className="loading">로딩 중...</div>;
+    if (error) return <div className="error">{error}</div>;
 
     return (
         <div className="quiz-page">
@@ -57,14 +96,21 @@ function QuizPage() {
                     <div className="setup-container">
                         <div className="wordlist-selection">
                             <h2><FontAwesomeIcon icon={faList} /> 단어장 선택</h2>
+                            <button
+                                onClick={() => setShowPublicLists(!showPublicLists)}
+                                className="toggle-public-btn"
+                            >
+                                <FontAwesomeIcon icon={showPublicLists ? faUser : faGlobe} />
+                                {showPublicLists ? ' 내 단어장 보기' : ' 공개 단어장 보기'}
+                            </button>
                             <div className="wordlist-grid">
-                                {selectedLists.map(list => (
+                                {wordLists.map(list => (
                                     <div
                                         key={list.id}
                                         className={`wordlist-item ${list.selected ? 'selected' : ''}`}
                                         onClick={() => toggleListSelection(list.id)}
                                     >
-                                        <span>{list.name}</span>
+                                        <span>{list.title}</span>
                                         <span className="word-count">{list.words.length} 단어</span>
                                     </div>
                                 ))}
@@ -113,7 +159,7 @@ function QuizPage() {
                 <QuizingPage
                     quizType={quizType}
                     quizLength={quizLength}
-                    selectedWords={selectedLists.filter(list => list.selected).flatMap(list => list.words)}
+                    selectedWords={wordLists.filter(list => list.selected).flatMap(list => list.words)}
                     onQuizEnd={handleQuizEnd}
                 />
             )}

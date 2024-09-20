@@ -33,14 +33,14 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd }) {
                 }
             }
             setCurrentQuestion({
-                word: correctAnswer.word,
-                options: shuffleArray(options.map(option => option.definition)),
-                correctAnswer: correctAnswer.definition
+                text: correctAnswer.text,
+                options: shuffleArray(options.map(option => option.transtext)),
+                correctAnswer: correctAnswer.transtext
             });
         } else {
             setCurrentQuestion({
-                word: correctAnswer.word,
-                correctAnswer: correctAnswer.definition
+                text: correctAnswer.text,
+                correctAnswer: correctAnswer.transtext
             });
         }
 
@@ -92,7 +92,7 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd }) {
                 <div className="score-display">점수: {score}</div>
             </div>
             <div className="quiz-content">
-                <h2 className="quiz-word">{currentQuestion?.word}</h2>
+                <h2 className="quiz-word">{currentQuestion?.text}</h2>
                 {quizType === 'multipleChoice' ? (
                     <div className="quiz-options">
                         {currentQuestion?.options.map((option, index) => (
