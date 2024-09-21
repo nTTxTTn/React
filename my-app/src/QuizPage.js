@@ -19,6 +19,7 @@ function QuizPage() {
     const [showPublicLists, setShowPublicLists] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedListId, setSelectedListId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -39,8 +40,7 @@ function QuizPage() {
                 return {
                     id: listData.id,
                     title: listData.title || '제목 없음',
-                    words: wordsResponse.data,
-                    selected: false
+                    words: wordsResponse.data
                 };
             }));
 
@@ -53,21 +53,20 @@ function QuizPage() {
         }
     };
 
-    const toggleListSelection = (id) => {
-        setWordLists(prevLists =>
-            prevLists.map(list =>
-                list.id === id ? { ...list, selected: !list.selected } : list
-            )
-        );
+    const selectList = (id) => {
+        setSelectedListId(id);
     };
 
     const startQuiz = () => {
-        const selectedWords = wordLists
-            .filter(list => list.selected)
-            .flatMap(list => list.words);
+        const selectedList = wordLists.find(list => list.id === selectedListId);
 
-        if (selectedWords.length < 4) {
-            alert('퀴즈를 시작하려면 최소 4개의 단어가 필요합니다.');
+        if (!selectedList) {
+            alert('퀴즈를 시작하려면 단어장을 선택해야 합니다.');
+            return;
+        }
+
+        if (selectedList.words.length < 4) {
+            alert('선택한 단어장에는 최소 4개의 단어가 필요합니다.');
             return;
         }
 
@@ -80,7 +79,7 @@ function QuizPage() {
             state: {
                 score: score,
                 totalQuestions: totalQuestions,
-                selectedLists: wordLists.filter(list => list.selected).map(list => list.title)
+                selectedList: wordLists.find(list => list.id === selectedListId).title
             }
         });
     };
@@ -107,8 +106,8 @@ function QuizPage() {
                                 {wordLists.map(list => (
                                     <div
                                         key={list.id}
-                                        className={`wordlist-item ${list.selected ? 'selected' : ''}`}
-                                        onClick={() => toggleListSelection(list.id)}
+                                        className={`wordlist-item ${list.id === selectedListId ? 'selected' : ''}`}
+                                        onClick={() => selectList(list.id)}
                                     >
                                         <span>{list.title}</span>
                                         <span className="word-count">{list.words.length} 단어</span>
@@ -159,8 +158,9 @@ function QuizPage() {
                 <QuizingPage
                     quizType={quizType}
                     quizLength={quizLength}
-                    selectedWords={wordLists.filter(list => list.selected).flatMap(list => list.words)}
+                    selectedWords={wordLists.find(list => list.id === selectedListId).words}
                     onQuizEnd={handleQuizEnd}
+                    vocalistId={selectedListId}
                 />
             )}
         </div>

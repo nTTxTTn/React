@@ -7,7 +7,7 @@ import './QuizResult.css';
 function QuizResult() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { score, totalQuestions, selectedLists } = location.state || {};
+    const { score, totalQuestions, selectedList } = location.state || {};
 
     const handleRetakeQuiz = () => {
         navigate('/quiz');
@@ -41,13 +41,9 @@ function QuizResult() {
                             "다음에는 더 잘할 수 있을 거예요!"}
                 </p>
             </div>
-            <div className="selected-lists">
+            <div className="selected-list">
                 <h3>선택한 단어장:</h3>
-                <ul>
-                    {selectedLists.map((list, index) => (
-                        <li key={index}>{list}</li>
-                    ))}
-                </ul>
+                <p>{selectedList}</p>
             </div>
             <div className="result-actions">
                 <button onClick={handleRetakeQuiz} className="retake-quiz-btn">

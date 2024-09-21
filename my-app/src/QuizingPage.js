@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faSync } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
 import './QuizingPage.css';
 
-function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd }) {
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true
+});
+
+function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistId }) {
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [score, setScore] = useState(0);
     const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [showResult, setShowResult] = useState(false);
     const [userInput, setUserInput] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         generateQuestion(selectedWords);
@@ -17,7 +25,7 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd }) {
 
     const generateQuestion = (words) => {
         if (currentQuestionNumber > quizLength) {
-            onQuizEnd(score, quizLength);
+            handleQuizEnd();
             return;
         }
 
@@ -75,6 +83,29 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd }) {
     const handleNextQuestion = () => {
         setCurrentQuestionNumber(prev => prev + 1);
         generateQuestion(selectedWords);
+    };
+
+    const handleQuizEnd = async () => {
+        try {
+            await saveQuizScore();
+            onQuizEnd(score, quizLength);
+        } catch (error) {
+            console.error('Failed to save quiz score:', error);
+            alert('퀴즈 점수 저장에 실패했습니다.');
+            onQuizEnd(score, quizLength);
+        }
+    };
+
+    const saveQuizScore = async () => {
+        const currentDate = new Date().toISOString();
+        await api.post(`/api/quiz/history/${vocalistId}`, {
+            score: score,
+            date: currentDate
+        });
+    };
+
+    const handleQuizQuit = () => {
+        navigate('/'); // 홈 화면으로 이동
     };
 
     return (
@@ -153,9 +184,9 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd }) {
                     </button>
                 )}
                 {showResult && currentQuestionNumber >= quizLength && (
-                    <button onClick={() => onQuizEnd(score, quizLength)} className="end-quiz-btn">퀴즈 종료</button>
+                    <button onClick={handleQuizEnd} className="end-quiz-btn">퀴즈 종료</button>
                 )}
-                <button onClick={() => onQuizEnd(score, currentQuestionNumber - 1)} className="quit-quiz-btn">퀴즈 그만두기</button>
+                <button onClick={handleQuizQuit} className="quit-quiz-btn">퀴즈 그만두기</button>
             </div>
         </div>
     );

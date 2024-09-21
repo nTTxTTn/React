@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faTrash, faPlus, faTimes, faEdit } from '@fortawesome/free-solid-svg-icons';
-import { UserContext } from './App'; // UserContext import 추가
+import { UserContext } from './App';
 import './EditWordList.css';
 
 const api = axios.create({
@@ -12,9 +12,8 @@ const api = axios.create({
 });
 
 function EditWordList() {
-    const { user } = useContext(UserContext); // 사용자 정보 가져오기
-    const [wordList, setWordList] = useState(null);
-    const [title, setTitle] = useState('');
+    const { user } = useContext(UserContext);
+    const [wordList, setWordList] = useState({ title: '', words: [] });
     const [newWord, setNewWord] = useState({ text: '', transtext: '', sampleSentence: '' });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -23,7 +22,7 @@ function EditWordList() {
 
     useEffect(() => {
         if (!user) {
-            navigate('/login'); // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+            navigate('/login');
         } else {
             fetchWordList();
         }
@@ -32,19 +31,15 @@ function EditWordList() {
     const fetchWordList = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/api/uservocalist');
-            const userWordLists = response.data;
-            const currentWordList = userWordLists.find(list => list.vocaListEntity.id === parseInt(id));
+            const [listResponse, wordsResponse] = await Promise.all([
+                api.get(`/api/vocalist/show/${id}`),
+                api.get(`/api/vocacontent/showall/${id}`)
+            ]);
 
-            if (currentWordList) {
-                setWordList({
-                    ...currentWordList.vocaListEntity,
-                    words: currentWordList.vocaContent
-                });
-                setTitle(currentWordList.vocaListEntity.title);
-            } else {
-                throw new Error('Vocabulary list not found');
-            }
+            setWordList({
+                ...listResponse.data,
+                words: wordsResponse.data || []
+            });
         } catch (error) {
             console.error('Failed to fetch word list:', error);
             setError('단어장을 불러오는데 실패했습니다.');
@@ -54,7 +49,7 @@ function EditWordList() {
     };
 
     const handleTitleChange = (e) => {
-        setTitle(e.target.value);
+        setWordList(prev => ({ ...prev, title: e.target.value }));
     };
 
     const handleWordChange = (wordId, field, value) => {
@@ -69,7 +64,7 @@ function EditWordList() {
     const handleAddWord = async () => {
         if (newWord.text && newWord.transtext) {
             try {
-                const response = await api.post(`/api/vocacontent/add/${id}`, newWord);
+                const response = await api.post(`/api/vocacontent/create/${id}`, newWord);
                 setWordList(prevState => ({
                     ...prevState,
                     words: [...prevState.words, response.data]
@@ -97,7 +92,7 @@ function EditWordList() {
 
     const handleSaveTitle = async () => {
         try {
-            await api.patch(`/api/vocalist/modify/${id}`, { title });
+            await api.patch(`/api/vocalist/modify/${id}`, { title: wordList.title });
             alert('단어장 제목이 수정되었습니다.');
         } catch (error) {
             console.error('Failed to save title:', error);
@@ -122,14 +117,13 @@ function EditWordList() {
 
     if (loading) return <div className="loading">Loading...</div>;
     if (error) return <div className="error">{error}</div>;
-    if (!wordList) return <div className="error">단어장을 찾을 수 없습니다.</div>;
 
     return (
         <div className="edit-word-list">
             <div className="title-edit">
                 <input
                     type="text"
-                    value={title}
+                    value={wordList.title}
                     onChange={handleTitleChange}
                     placeholder="단어장 제목"
                 />
