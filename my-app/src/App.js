@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect, createContext, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -28,26 +28,81 @@ const api = axios.create({
 function AppContent() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [accessToken, setAccessToken] = useState(null);
     const navigate = useNavigate();
+
+    const refreshAccessToken = useCallback(async () => {
+        try {
+            const response = await api.post('/reissue');
+            const newAccessToken = response.data.accessToken;
+            setAccessToken(newAccessToken);
+            return newAccessToken;
+        } catch (error) {
+            console.error('Failed to refresh access token:', error);
+            setUser(null);
+            setAccessToken(null);
+            navigate('/login');
+            throw error;
+        }
+    }, [navigate]);
 
     useEffect(() => {
         checkLoginStatus();
     }, []);
 
-    const checkLoginStatus = async () => {
+    useEffect(() => {
+        const requestInterceptor = api.interceptors.request.use(
+            (config) => {
+                if (accessToken) {
+                    config.headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+                return config;
+            },
+            (error) => Promise.reject(error)
+        );
+
+        const responseInterceptor = api.interceptors.response.use(
+            (response) => response,
+            async (error) => {
+                const originalRequest = error.config;
+                if (error.response.status === 401 && !originalRequest._retry) {
+                    originalRequest._retry = true;
+                    try {
+                        const newAccessToken = await refreshAccessToken();
+                        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                        return api(originalRequest);
+                    } catch (refreshError) {
+                        return Promise.reject(refreshError);
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            api.interceptors.request.eject(requestInterceptor);
+            api.interceptors.response.eject(responseInterceptor);
+        };
+    }, [accessToken, refreshAccessToken]);
+
+    const checkLoginStatus = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get('/api/users/myuserdata');
             setUser(response.data);
+            const token = response.headers['authorization']?.split(' ')[1];
+            if (token) {
+                setAccessToken(token);
+            }
             console.log('Current user:', response.data);
-            navigate('/');
         } catch (error) {
             console.error('Failed to fetch user data:', error);
             setUser(null);
+            setAccessToken(null);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const handleLogin = () => {
         window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
@@ -55,8 +110,9 @@ function AppContent() {
 
     const handleLogout = async () => {
         try {
-            await api.get('/logout');
+            await api.get('/logout');  // Changed from GET to POST
             setUser(null);
+            setAccessToken(null);
             localStorage.clear();
             sessionStorage.clear();
 
@@ -90,7 +146,7 @@ function AppContent() {
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser }}>
+        <UserContext.Provider value={{ user, setUser, accessToken, setAccessToken, refreshAccessToken }}>
             <div className="app-container">
                 <header className="app-header">
                     <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />

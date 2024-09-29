@@ -13,7 +13,7 @@ const api = axios.create({
 });
 
 function CreateWordList() {
-    const { user, setUser } = useContext(UserContext);
+    const { user, accessToken, setAccessToken } = useContext(UserContext);
     const [title, setTitle] = useState('');
     const [words, setWords] = useState([]);
     const [currentWord, setCurrentWord] = useState({ text: '', transtext: '', sampleSentence: '' });
@@ -27,13 +27,38 @@ function CreateWordList() {
     useEffect(() => {
         console.log('CreateWordList component mounted. User:', user);
         if (!user) {
-            redirectToLogin();
+            navigate('/login');
         }
-    }, [user]);
+    }, [user, navigate]);
 
-    const redirectToLogin = () => {
-        const loginUrl = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
-        window.location.href = loginUrl;
+    const refreshToken = async () => {
+        try {
+            const response = await api.post('/reissue');
+            setAccessToken(response.data.accessToken);
+            return response.data.accessToken;
+        } catch (error) {
+            console.error('Failed to refresh token:', error);
+            throw error;
+        }
+    };
+
+    const handleApiCall = async (apiFunc) => {
+        try {
+            return await apiFunc();
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                try {
+                    const newToken = await refreshToken();
+                    api.defaults.headers['Authorization'] = `Bearer ${newToken}`;
+                    return await apiFunc();
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError);
+                    navigate('/login');
+                    throw refreshError;
+                }
+            }
+            throw error;
+        }
     };
 
     const createWordList = async () => {
@@ -46,8 +71,12 @@ function CreateWordList() {
         setSuccessMessage(null);
         try {
             console.log('Sending request to create word list:', { title });
-            const response = await api.post('/api/vocalist/create', { title });
-            console.log('Word list creation response:', response.data);
+            const response = await handleApiCall(() =>
+                api.post('/api/vocalist/create', { title }, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                })
+            );
+            console.log('Word list creation response:', response);
             if (response.data && response.data.id) {
                 setVocalistId(response.data.id);
                 setStep('add');
@@ -58,9 +87,6 @@ function CreateWordList() {
         } catch (error) {
             console.error('Error creating word list:', error);
             setError(`단어장 생성에 실패했습니다: ${error.message}`);
-            if (error.response && error.response.status === 401) {
-                setUser(null);
-            }
         } finally {
             setIsLoading(false);
         }
@@ -81,8 +107,12 @@ function CreateWordList() {
                 sampleSentence: currentWord.sampleSentence || ''
             };
             console.log('Sending request to add word:', newWord);
-            const response = await api.post(`/api/vocacontent/create/${vocalistId}`, newWord);
-            console.log('Word addition response:', response.data);
+            const response = await handleApiCall(() =>
+                api.post(`/api/vocacontent/create/${vocalistId}`, newWord, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                })
+            );
+            console.log('Word addition response:', response);
             if (response.data && response.data.id) {
                 setWords(prevWords => [...prevWords, response.data]);
                 setCurrentWord({ text: '', transtext: '', sampleSentence: '' });
@@ -92,14 +122,7 @@ function CreateWordList() {
             }
         } catch (error) {
             console.error('Error adding word:', error);
-            if (error.response && error.response.status === 401) {
-                setError('인증이 만료되었습니다. 다시 로그인해주세요.');
-                setUser(null);
-            } else if (error.response && error.response.headers['content-type'].includes('text/html')) {
-                setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-            } else {
-                setError(`단어 추가에 실패했습니다: ${error.message}`);
-            }
+            setError(`단어 추가에 실패했습니다: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -115,12 +138,7 @@ function CreateWordList() {
     };
 
     if (!user) {
-        return (
-            <div>
-                <p>로그인이 필요합니다.</p>
-                <button onClick={redirectToLogin}>Google로 로그인</button>
-            </div>
-        );
+        return <div>Loading...</div>;
     }
 
     return (

@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 function EditWordList() {
-    const { user } = useContext(UserContext);
+    const { user, accessToken, setAccessToken } = useContext(UserContext);
     const [wordList, setWordList] = useState({ title: '', words: [] });
     const [newWord, setNewWord] = useState({ text: '', transtext: '', sampleSentence: '' });
     const [loading, setLoading] = useState(true);
@@ -28,21 +28,61 @@ function EditWordList() {
         }
     }, [id, user, navigate]);
 
+    const refreshToken = async () => {
+        try {
+            const refreshResponse = await api.post('/api/auth/refresh');
+            setAccessToken(refreshResponse.data.accessToken);
+            return refreshResponse.data.accessToken;
+        } catch (refreshError) {
+            setError('세션이 만료되었습니다. 다시 로그인해주세요.');
+            navigate('/login');
+            throw refreshError;
+        }
+    };
+
+    const handleApiCall = async (apiFunc) => {
+        try {
+            return await apiFunc();
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                const newToken = await refreshToken();
+                return await apiFunc(newToken);
+            }
+            throw error;
+        }
+    };
+
     const fetchWordList = async () => {
         try {
             setLoading(true);
             const [listResponse, wordsResponse] = await Promise.all([
-                api.get(`/api/vocalist/show/${id}`),
-                api.get(`/api/vocacontent/showall/${id}`)
+                handleApiCall((token = accessToken) => api.get(`/api/vocalist/show/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })),
+                handleApiCall((token = accessToken) => api.get(`/api/vocacontent/showall/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }))
             ]);
+
+            console.log('List Response:', listResponse.data);
+            console.log('Words Response:', wordsResponse.data);
+
+            if (!listResponse.data || typeof listResponse.data !== 'object') {
+                throw new Error('Invalid list data received');
+            }
+
+            if (!Array.isArray(wordsResponse.data)) {
+                throw new Error('Invalid words data received');
+            }
 
             setWordList({
                 ...listResponse.data,
                 words: wordsResponse.data || []
             });
+            setError(null);
         } catch (error) {
             console.error('Failed to fetch word list:', error);
-            setError('단어장을 불러오는데 실패했습니다.');
+            setError('단어장을 불러오는데 실패했습니다: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -61,10 +101,44 @@ function EditWordList() {
         }));
     };
 
+    const handleSaveTitle = async () => {
+        try {
+            await handleApiCall((token = accessToken) => api.patch(`/api/vocalist/modify/${id}`,
+                { title: wordList.title },
+                { headers: { Authorization: `Bearer ${token}` } }
+            ));
+            alert('단어장 제목이 수정되었습니다.');
+        } catch (error) {
+            console.error('Failed to save title:', error);
+            alert('단어장 제목 저장에 실패했습니다.');
+        }
+    };
+
+    const handleSaveWord = async (wordId) => {
+        const wordToUpdate = wordList.words.find(word => word.id === wordId);
+        try {
+            await handleApiCall((token = accessToken) => api.patch(`/api/vocacontent/modify/${id}/${wordId}`,
+                {
+                    text: wordToUpdate.text,
+                    transtext: wordToUpdate.transtext,
+                    sampleSentence: wordToUpdate.sampleSentence
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            ));
+            alert('단어가 수정되었습니다.');
+        } catch (error) {
+            console.error('Failed to save word:', error);
+            alert('단어 저장에 실패했습니다.');
+        }
+    };
+
     const handleAddWord = async () => {
         if (newWord.text && newWord.transtext) {
             try {
-                const response = await api.post(`/api/vocacontent/create/${id}`, newWord);
+                const response = await handleApiCall((token = accessToken) => api.post(`/api/vocacontent/create/${id}`,
+                    newWord,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                ));
                 setWordList(prevState => ({
                     ...prevState,
                     words: [...prevState.words, response.data]
@@ -79,7 +153,9 @@ function EditWordList() {
 
     const handleDeleteWord = async (wordId) => {
         try {
-            await api.delete(`/api/vocacontent/delete/${id}/${wordId}`);
+            await handleApiCall((token = accessToken) => api.delete(`/api/vocacontent/delete/${id}/${wordId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            ));
             setWordList(prevState => ({
                 ...prevState,
                 words: prevState.words.filter(word => word.id !== wordId)
@@ -87,31 +163,6 @@ function EditWordList() {
         } catch (error) {
             console.error('Failed to delete word:', error);
             alert('단어 삭제에 실패했습니다.');
-        }
-    };
-
-    const handleSaveTitle = async () => {
-        try {
-            await api.patch(`/api/vocalist/modify/${id}`, { title: wordList.title });
-            alert('단어장 제목이 수정되었습니다.');
-        } catch (error) {
-            console.error('Failed to save title:', error);
-            alert('단어장 제목 저장에 실패했습니다.');
-        }
-    };
-
-    const handleSaveWord = async (wordId) => {
-        const wordToUpdate = wordList.words.find(word => word.id === wordId);
-        try {
-            await api.patch(`/api/vocacontent/modify/${id}/${wordId}`, {
-                text: wordToUpdate.text,
-                transtext: wordToUpdate.transtext,
-                sampleSentence: wordToUpdate.sampleSentence
-            });
-            alert('단어가 수정되었습니다.');
-        } catch (error) {
-            console.error('Failed to save word:', error);
-            alert('단어 저장에 실패했습니다.');
         }
     };
 
