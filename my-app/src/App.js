@@ -110,7 +110,7 @@ function AppContent() {
 
     const handleLogout = async () => {
         try {
-            await api.get('/logout');  // Changed from GET to POST
+            await api.get('/logout');
             setUser(null);
             setAccessToken(null);
             localStorage.clear();
