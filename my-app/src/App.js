@@ -32,8 +32,19 @@ function AppContent() {
     const navigate = useNavigate();
 
     const saveAccessToken = (token) => {
+        console.log('saveAccessToken 함수 호출됨');
+        console.log('저장할 액세스 토큰:', token);
+
         setAccessToken(token);
-        localStorage.setItem('accessToken', token);
+        console.log('액세스 토큰이 상태에 저장됨');
+
+        console.log('액세스 토큰을 로컬 스토리지에 저장 시도...');
+        try {
+            localStorage.setItem('accessToken', token);
+            console.log('액세스 토큰이 로컬 스토리지에 성공적으로 저장됨');
+        } catch (error) {
+            console.error('로컬 스토리지에 액세스 토큰 저장 중 오류 발생:', error);
+        }
     };
 
     const clearAccessToken = () => {
@@ -80,6 +91,7 @@ function AppContent() {
                     try {
                         const newAccessToken = await refreshAccessToken();
                         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                        originalRequest.headers['Access'] = `Bearer ${newAccessToken}`;
                         return api(originalRequest);
                     } catch (refreshError) {
                         return Promise.reject(refreshError);
@@ -95,28 +107,66 @@ function AppContent() {
         };
     }, [accessToken, refreshAccessToken]);
 
-    const checkLoginStatus = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/api/users/myuserdata');
-            setUser(response.data);
-            const token = response.headers['access'];
-            if (token) {
-                saveAccessToken(token);
-            }
-            console.log('Current user:', response.data);
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-            setUser(null);
-            clearAccessToken();
-        } finally {
-            setLoading(false);
-        }
-    }, []);
 
     const handleLogin = () => {
-        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
+        console.log('Initiating login process...');
+        const googleAuthUrl = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
+        console.log('Redirecting to:', googleAuthUrl);
+        window.location.href = googleAuthUrl;
     };
+
+    const checkLoginStatus = useCallback(async () => {
+        console.log('로그인 상태 확인 시작');
+        try {
+            setLoading(true);
+            console.log('현재 accessToken:', accessToken);
+            if (!accessToken) {
+                console.log('accessToken이 없음. 사용자를 null로 설정');
+                setUser(null);
+                setLoading(false);
+                return;
+            }
+            console.log('사용자 데이터 요청 시작');
+            const response = await api.get('/api/users/myuserdata');
+            console.log('사용자 데이터 응답:', response.data);
+            setUser(response.data);
+
+            // 응답 헤더에서 새 액세스 토큰 확인 및 저장
+            const newToken = response.headers['Access'] || response.headers['access'] || response.headers['authorization'];
+            if (newToken) {
+                const tokenParts = newToken.split(' ');
+                const tokenValue = tokenParts.length > 1 ? tokenParts[1] : newToken;
+                saveAccessToken(tokenValue);
+            }
+
+        } catch (error) {
+            console.error('사용자 데이터 가져오기 실패:', error);
+            if (error.response && error.response.status === 401) {
+                console.log('401 오류 발생. 토큰 갱신 시도');
+                try {
+                    await refreshAccessToken();
+                    console.log('토큰 갱신 성공. 사용자 데이터 재요청');
+                    const retryResponse = await api.get('/api/users/myuserdata');
+                    console.log('재요청 후 사용자 데이터:', retryResponse.data);
+                    setUser(retryResponse.data);
+                } catch (refreshError) {
+                    console.error('토큰 갱신 실패:', refreshError);
+                    console.log('사용자를 null로 설정하고 토큰 삭제');
+                    setUser(null);
+                    clearAccessToken();
+                }
+            } else {
+                console.log('401 이외의 오류. 사용자를 null로 설정하고 토큰 삭제');
+                setUser(null);
+                clearAccessToken();
+            }
+        } finally {
+            setLoading(false);
+            console.log('로그인 상태 확인 완료');
+        }
+    }, [accessToken, saveAccessToken, refreshAccessToken]);
+
+
 
     const handleLogout = async () => {
         try {
