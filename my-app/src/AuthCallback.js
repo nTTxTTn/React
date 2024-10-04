@@ -13,33 +13,37 @@ function AuthCallback({ checkLoginStatus, saveAccess }) {
             console.log('AuthCallback: 콜백 처리 시작');
 
             try {
-                // 4. URL에서 access_token 추출
-                const params = new URLSearchParams(location.hash.slice(1));
-                const accessToken = params.get('access_token');
+                // URL의 쿼리 파라미터에서 code 추출
+                const queryParams = new URLSearchParams(location.search);
+                const code = queryParams.get('code');
+                console.log('추출한 코드', code);
 
-                if (!accessToken) {
-                    throw new Error('URL에서 access_token을 찾을 수 없습니다.');
+                if (!code) {
+                    throw new Error('코드를 찾을 수 없습니다.');
                 }
 
-                console.log('AuthCallback: access_token 감지');
+                console.log('AuthCallback: 코드 감지');
 
-                // 5. 추출한 access_token을 백엔드로 전송
-                const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/auth/token`, { token: accessToken });
+                // 코드를 헤더에 넣어 백엔드로 전송
+                const response = await axios.post(
+                    `${process.env.REACT_APP_API_BASE_URL}/login/oauth2/code/google`,
+                    {},  // 빈 객체를 body로 전송
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${code}`
+                        }
+                    }
+                );
 
-                if (!response.data || !response.data.jwt) {
-                    throw new Error('백엔드에서 유효한 JWT를 받지 못했습니다.');
+
+                // 응답 헤더에서 필요한 정보 추출 및 로컬 스토리지에 저장
+                const headerAccessToken = response.headers['Access'];
+                console.log('응답 헤더에서 추출한 액세스 토큰:', headerAccessToken); // 추가된 console.log
+
+                if (headerAccessToken) {
+                    localStorage.setItem('accessToken', headerAccessToken.replace('Bearer ', ''));
+                    console.log('AuthCallback: 액세스 토큰 로컬 스토리지에 저장 완료');
                 }
-
-                const jwt = response.data.jwt;
-                console.log('AuthCallback: 백엔드에서 JWT 수신');
-
-                // JWT 저장
-                saveAccess(jwt);
-                console.log('AuthCallback: JWT 저장 완료');
-
-                // 로컬 스토리지에 JWT 저장
-                localStorage.setItem('Access', jwt);
-                console.log('AuthCallback: JWT 로컬 스토리지에 저장 완료');
 
                 // 로그인 상태 확인
                 await checkLoginStatus();

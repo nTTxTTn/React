@@ -28,28 +28,28 @@ const api = axios.create({
 function AppContent() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [Access, setAccess] = useState(() => localStorage.getItem('Access'));
+    const [access, setAccess] = useState(() => localStorage.getItem('access'));
     const navigate = useNavigate();
 
     const saveAccess = useCallback((token) => {
         console.log('saveAccess 함수 호출됨');
-        console.log('저장할 Access 토큰:', token);
+        console.log('저장할 access 토큰:', token);
 
         setAccess(token);
-        console.log('Access 토큰이 상태에 저장됨');
+        console.log('access 토큰이 상태에 저장됨');
 
-        console.log('Access 토큰을 로컬 스토리지에 저장 시도...');
+        console.log('access 토큰을 로컬 스토리지에 저장 시도...');
         try {
-            localStorage.setItem('Access', token);
-            console.log('Access 토큰이 로컬 스토리지에 성공적으로 저장됨');
+            localStorage.setItem('access', token);
+            console.log('access 토큰이 로컬 스토리지에 성공적으로 저장됨');
         } catch (error) {
-            console.error('로컬 스토리지에 Access 토큰 저장 중 오류 발생:', error);
+            console.error('로컬 스토리지에 access 토큰 저장 중 오류 발생:', error);
         }
     }, []);
 
     const clearAccess = useCallback(() => {
         setAccess(null);
-        localStorage.removeItem('Access');
+        localStorage.removeItem('access');
     }, []);
 
     const refreshAccess = useCallback(async () => {
@@ -59,7 +59,7 @@ function AppContent() {
             saveAccess(newAccess);
             return newAccess;
         } catch (error) {
-            console.error('Failed to refresh Access token:', error);
+            console.error('Failed to refresh access token:', error);
             setUser(null);
             clearAccess();
             navigate('/login');
@@ -71,9 +71,9 @@ function AppContent() {
         console.log('로그인 상태 확인 시작');
         try {
             setLoading(true);
-            console.log('현재 Access:', Access);
-            if (!Access) {
-                console.log('Access가 없음. 사용자를 null로 설정');
+            console.log('현재 access:', access);
+            if (!access) {
+                console.log('access가 없음. 사용자를 null로 설정');
                 setUser(null);
                 setLoading(false);
                 return;
@@ -83,8 +83,8 @@ function AppContent() {
             console.log('사용자 데이터 응답:', response.data);
             setUser(response.data);
 
-            // 응답 헤더에서 새 Access 토큰 확인 및 저장
-            const newToken = response.headers['Access'] || response.headers['access'];
+            // 응답 헤더에서 새 access 토큰 확인 및 저장
+            const newToken = response.headers['access'] || response.headers['Access'];
             if (newToken) {
                 const tokenValue = newToken.startsWith('Bearer ') ? newToken.slice(7) : newToken;
                 saveAccess(tokenValue);
@@ -115,7 +115,7 @@ function AppContent() {
             setLoading(false);
             console.log('로그인 상태 확인 완료');
         }
-    }, [Access, saveAccess, refreshAccess, clearAccess]);
+    }, [access, saveAccess, refreshAccess, clearAccess]);
 
     useEffect(() => {
         checkLoginStatus();
@@ -124,8 +124,8 @@ function AppContent() {
     useEffect(() => {
         const requestInterceptor = api.interceptors.request.use(
             (config) => {
-                if (Access) {
-                    config.headers['Access'] = `Bearer ${Access}`;
+                if (access) {
+                    config.headers['access'] = `Bearer ${access}`;
                 }
                 return config;
             },
@@ -140,7 +140,7 @@ function AppContent() {
                     originalRequest._retry = true;
                     try {
                         const newAccess = await refreshAccess();
-                        originalRequest.headers['Access'] = `Bearer ${newAccess}`;
+                        originalRequest.headers['access'] = `Bearer ${newAccess}`;
                         return api(originalRequest);
                     } catch (refreshError) {
                         return Promise.reject(refreshError);
@@ -154,7 +154,7 @@ function AppContent() {
             api.interceptors.request.eject(requestInterceptor);
             api.interceptors.response.eject(responseInterceptor);
         };
-    }, [Access, refreshAccess]);
+    }, [access, refreshAccess]);
 
     const handleLogin = () => {
         console.log('Initiating login process...');
@@ -201,7 +201,7 @@ function AppContent() {
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser, Access, setAccess: saveAccess, refreshAccess }}>
+        <UserContext.Provider value={{ user, setUser, access, setAccess: saveAccess, refreshAccess }}>
             <div className="app-container">
                 <header className="app-header">
                     <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
