@@ -33,14 +33,16 @@ function AppContent() {
 
     const saveAccess = useCallback((token) => {
         console.log('saveAccess 함수 호출됨');
-        console.log('저장할 access 토큰:', token);
+        // Bearer 접두사 제거
+        const tokenValue = token.startsWith('Bearer ') ? token.slice(7) : token;
+        console.log('저장할 access 토큰:', tokenValue);
 
-        setAccess(token);
+        setAccess(tokenValue);
         console.log('access 토큰이 상태에 저장됨');
 
         console.log('access 토큰을 로컬 스토리지에 저장 시도...');
         try {
-            localStorage.setItem('access', token);
+            localStorage.setItem('access', tokenValue);
             console.log('access 토큰이 로컬 스토리지에 성공적으로 저장됨');
         } catch (error) {
             console.error('로컬 스토리지에 access 토큰 저장 중 오류 발생:', error);
@@ -71,23 +73,26 @@ function AppContent() {
         console.log('로그인 상태 확인 시작');
         try {
             setLoading(true);
-            console.log('현재 access:', access);
-            if (!access) {
+            const storedAccess = localStorage.getItem('access');
+            console.log('현재 access:', storedAccess);
+            if (!storedAccess) {
                 console.log('access가 없음. 사용자를 null로 설정');
                 setUser(null);
                 setLoading(false);
                 return;
             }
+            setAccess(storedAccess);
             console.log('사용자 데이터 요청 시작');
-            const response = await api.get('/api/users/myuserdata');
+            const response = await api.get('/api/users/myuserdata', {
+                headers: { 'Authorization': `Bearer ${storedAccess}` }
+            });
             console.log('사용자 데이터 응답:', response.data);
             setUser(response.data);
 
             // 응답 헤더에서 새 access 토큰 확인 및 저장
             const newToken = response.headers['access'] || response.headers['Access'];
             if (newToken) {
-                const tokenValue = newToken.startsWith('Bearer ') ? newToken.slice(7) : newToken;
-                saveAccess(tokenValue);
+                saveAccess(newToken);
             }
 
         } catch (error) {
@@ -115,7 +120,7 @@ function AppContent() {
             setLoading(false);
             console.log('로그인 상태 확인 완료');
         }
-    }, [access, saveAccess, refreshAccess, clearAccess]);
+    }, [saveAccess, refreshAccess, clearAccess]);
 
     useEffect(() => {
         checkLoginStatus();
@@ -124,8 +129,9 @@ function AppContent() {
     useEffect(() => {
         const requestInterceptor = api.interceptors.request.use(
             (config) => {
-                if (access) {
-                    config.headers['access'] = `Bearer ${access}`;
+                const storedAccess = localStorage.getItem('access');
+                if (storedAccess) {
+                    config.headers['Authorization'] = `Bearer ${storedAccess}`;
                 }
                 return config;
             },
@@ -140,7 +146,7 @@ function AppContent() {
                     originalRequest._retry = true;
                     try {
                         const newAccess = await refreshAccess();
-                        originalRequest.headers['access'] = `Bearer ${newAccess}`;
+                        originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
                         return api(originalRequest);
                     } catch (refreshError) {
                         return Promise.reject(refreshError);
@@ -154,7 +160,7 @@ function AppContent() {
             api.interceptors.request.eject(requestInterceptor);
             api.interceptors.response.eject(responseInterceptor);
         };
-    }, [access, refreshAccess]);
+    }, [refreshAccess]);
 
     const handleLogin = () => {
         console.log('Initiating login process...');
@@ -212,7 +218,7 @@ function AppContent() {
                         <Routes>
                             <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
                             <Route path="/" element={<HomePage user={user} />} />
-                            <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} saveAccess={saveAccess} />} />
+                            <Route path="/auth-callback" element={<AuthCallback saveAccess={saveAccess} setUser={setUser} />} />
                             <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList user={user} /></ProtectedRoute>} />
                             <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
                             <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
