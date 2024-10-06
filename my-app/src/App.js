@@ -7,7 +7,7 @@ import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
 import LoadingSpinner from './LoadingSpinner';
-import AuthCallback from './AuthCallback';
+/*import AuthSuccess from './AuthSuccess'; // 새로 추가된 컴포넌트*/
 import HomePage from './HomePage';
 import CreateWordList from './CreateWordList';
 import FlashcardView from "./FlashcardView";
@@ -32,21 +32,8 @@ function AppContent() {
     const navigate = useNavigate();
 
     const saveAccess = useCallback((token) => {
-        console.log('saveAccess 함수 호출됨');
-        // Bearer 접두사 제거
-        const tokenValue = token.startsWith('Bearer ') ? token.slice(7) : token;
-        console.log('저장할 access 토큰:', tokenValue);
-
-        setAccess(tokenValue);
-        console.log('access 토큰이 상태에 저장됨');
-
-        console.log('access 토큰을 로컬 스토리지에 저장 시도...');
-        try {
-            localStorage.setItem('access', tokenValue);
-            console.log('access 토큰이 로컬 스토리지에 성공적으로 저장됨');
-        } catch (error) {
-            console.error('로컬 스토리지에 access 토큰 저장 중 오류 발생:', error);
-        }
+        setAccess(token);
+        localStorage.setItem('access', token);
     }, []);
 
     const clearAccess = useCallback(() => {
@@ -70,55 +57,36 @@ function AppContent() {
     }, [navigate, saveAccess, clearAccess]);
 
     const checkLoginStatus = useCallback(async () => {
-        console.log('로그인 상태 확인 시작');
         try {
             setLoading(true);
             const storedAccess = localStorage.getItem('access');
-            console.log('현재 access:', storedAccess);
             if (!storedAccess) {
-                console.log('access가 없음. 사용자를 null로 설정');
                 setUser(null);
                 setLoading(false);
                 return;
             }
             setAccess(storedAccess);
-            console.log('사용자 데이터 요청 시작');
             const response = await api.get('/api/users/myuserdata', {
                 headers: { 'Authorization': `Bearer ${storedAccess}` }
             });
-            console.log('사용자 데이터 응답:', response.data);
             setUser(response.data);
-
-            // 응답 헤더에서 새 access 토큰 확인 및 저장
-            const newToken = response.headers['access'] || response.headers['Access'];
-            if (newToken) {
-                saveAccess(newToken);
-            }
-
         } catch (error) {
-            console.error('사용자 데이터 가져오기 실패:', error);
+            console.error('Failed to fetch user data:', error);
             if (error.response && error.response.status === 401) {
-                console.log('401 오류 발생. 토큰 갱신 시도');
                 try {
                     await refreshAccess();
-                    console.log('토큰 갱신 성공. 사용자 데이터 재요청');
                     const retryResponse = await api.get('/api/users/myuserdata');
-                    console.log('재요청 후 사용자 데이터:', retryResponse.data);
                     setUser(retryResponse.data);
                 } catch (refreshError) {
-                    console.error('토큰 갱신 실패:', refreshError);
-                    console.log('사용자를 null로 설정하고 토큰 삭제');
                     setUser(null);
                     clearAccess();
                 }
             } else {
-                console.log('401 이외의 오류. 사용자를 null로 설정하고 토큰 삭제');
                 setUser(null);
                 clearAccess();
             }
         } finally {
             setLoading(false);
-            console.log('로그인 상태 확인 완료');
         }
     }, [saveAccess, refreshAccess, clearAccess]);
 
@@ -163,10 +131,21 @@ function AppContent() {
     }, [refreshAccess]);
 
     const handleLogin = () => {
-        console.log('Initiating login process...');
-        const googleAuthUrl = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
-        console.log('Redirecting to:', googleAuthUrl);
-        window.location.href = googleAuthUrl;
+        // 백엔드의 OAuth 시작 엔드포인트로 리다이렉트
+        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
+        axios.defaults.withCredentials = true;
+        .then((res) => {
+            if (res.status === 200) {
+                // 모든 헤더 이름은 소문자
+                let accessToken = res.headers['access']; // 응답헤더에서 토큰 받기
+                console.log('access 토큰 :', accessToken);
+                setLocalStorage('access_token', accessToken); // 토큰 localStorage에 저장
+                axios.defaults.headers.common[
+                    'access'
+                    ] = `Bearer ${accessToken}`;
+                navigate('/');
+            }
+        })
     };
 
     const handleLogout = async () => {
@@ -189,8 +168,8 @@ function AppContent() {
 
             toast.success('로그아웃되었습니다.');
         } catch (error) {
-            console.error('로그아웃 실패:', error.response ? error.response.data : error.message);
-            toast.error(`로그아웃에 실패했습니다: ${error.response ? error.response.data : error.message}`);
+            console.error('로그아웃 실패:', error);
+            toast.error(`로그아웃에 실패했습니다: ${error.message}`);
         }
     };
 
@@ -199,7 +178,6 @@ function AppContent() {
     }
 
     const ProtectedRoute = ({ children }) => {
-        console.log('ProtectedRoute rendered, user:', user);
         if (!user) {
             return <Navigate to="/login" />;
         }
@@ -218,7 +196,6 @@ function AppContent() {
                         <Routes>
                             <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
                             <Route path="/" element={<HomePage user={user} />} />
-                            <Route path="/auth-callback" element={<AuthCallback saveAccess={saveAccess} setUser={setUser} />} />
                             <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList user={user} /></ProtectedRoute>} />
                             <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
                             <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
