@@ -7,7 +7,7 @@ import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
 import LoadingSpinner from './LoadingSpinner';
-/*import AuthSuccess from './AuthSuccess'; // 새로 추가된 컴포넌트*/
+import AuthCallback from './AuthCallback';
 import HomePage from './HomePage';
 import CreateWordList from './CreateWordList';
 import FlashcardView from "./FlashcardView";
@@ -41,9 +41,24 @@ function AppContent() {
         localStorage.removeItem('access');
     }, []);
 
+    const saveRefreshToken = useCallback((token) => {
+        // Save refresh token in an HTTP-only cookie
+        document.cookie = `refreshToken=${token}; path=/; HttpOnly; Secure; SameSite=Strict`;
+    }, []);
+
     const refreshAccess = useCallback(async () => {
         try {
-            const response = await api.post('/reissue');
+            // Get refresh token from cookie
+            const refreshToken = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('refreshToken='))
+                ?.split('=')[1];
+
+            if (!refreshToken) {
+                throw new Error('Refresh token not found');
+            }
+
+            const response = await api.post('/reissue', { refreshToken });
             const newAccess = response.data.accessToken;
             saveAccess(newAccess);
             return newAccess;
@@ -51,6 +66,8 @@ function AppContent() {
             console.error('Failed to refresh access token:', error);
             setUser(null);
             clearAccess();
+            // Clear refresh token cookie
+            document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
             navigate('/login');
             throw error;
         }
@@ -133,19 +150,6 @@ function AppContent() {
     const handleLogin = () => {
         // 백엔드의 OAuth 시작 엔드포인트로 리다이렉트
         window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
-        axios.defaults.withCredentials = true;
-        .then((res) => {
-            if (res.status === 200) {
-                // 모든 헤더 이름은 소문자
-                let accessToken = res.headers['access']; // 응답헤더에서 토큰 받기
-                console.log('access 토큰 :', accessToken);
-                setLocalStorage('access_token', accessToken); // 토큰 localStorage에 저장
-                axios.defaults.headers.common[
-                    'access'
-                    ] = `Bearer ${accessToken}`;
-                navigate('/');
-            }
-        })
     };
 
     const handleLogout = async () => {
@@ -155,6 +159,8 @@ function AppContent() {
             clearAccess();
             localStorage.clear();
             sessionStorage.clear();
+            // Clear refresh token cookie
+            document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
             const googleLogoutUrl = "https://accounts.google.com/Logout";
             const googleLogoutWindow = window.open(googleLogoutUrl, '_blank', 'width=1,height=1');
@@ -203,6 +209,13 @@ function AppContent() {
                             <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList user={user} /></ProtectedRoute>} />
                             <Route path="/quiz" element={<ProtectedRoute><QuizPage user={user} /></ProtectedRoute>} />
                             <Route path="/quiz-result" element={<ProtectedRoute><QuizResult user={user} /></ProtectedRoute>} />
+                            <Route path="/auth-callback" element={
+                                <AuthCallback
+                                    checkLoginStatus={checkLoginStatus}
+                                    saveAccessToken={saveAccess}
+                                    saveRefreshToken={saveRefreshToken}
+                                />
+                            } />
                         </Routes>
                     </main>
                 </div>
