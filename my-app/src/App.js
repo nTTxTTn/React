@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,7 +7,6 @@ import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
 import LoadingSpinner from './LoadingSpinner';
-import AuthCallback from './AuthCallback';
 import HomePage from './HomePage';
 import CreateWordList from './CreateWordList';
 import FlashcardView from "./FlashcardView";
@@ -30,6 +29,7 @@ function AppContent() {
     const [loading, setLoading] = useState(true);
     const [access, setAccess] = useState(() => localStorage.getItem('access'));
     const navigate = useNavigate();
+    const location = useLocation();
 
     const saveAccess = useCallback((token) => {
         setAccess(token);
@@ -40,38 +40,6 @@ function AppContent() {
         setAccess(null);
         localStorage.removeItem('access');
     }, []);
-
-    const saveRefreshToken = useCallback((token) => {
-        // Save refresh token in an HTTP-only cookie
-        document.cookie = `refreshToken=${token}; path=/; HttpOnly; Secure; SameSite=Strict`;
-    }, []);
-
-    const refreshAccess = useCallback(async () => {
-        try {
-            // Get refresh token from cookie
-            const refreshToken = document.cookie
-                .split('; ')
-                .find(row => row.startsWith('refreshToken='))
-                ?.split('=')[1];
-
-            if (!refreshToken) {
-                throw new Error('Refresh token not found');
-            }
-
-            const response = await api.post('/reissue', { refreshToken });
-            const newAccess = response.data.accessToken;
-            saveAccess(newAccess);
-            return newAccess;
-        } catch (error) {
-            console.error('Failed to refresh access token:', error);
-            setUser(null);
-            clearAccess();
-            // Clear refresh token cookie
-            document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            navigate('/login');
-            throw error;
-        }
-    }, [navigate, saveAccess, clearAccess]);
 
     const checkLoginStatus = useCallback(async () => {
         try {
@@ -89,27 +57,47 @@ function AppContent() {
             setUser(response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
-            if (error.response && error.response.status === 401) {
-                try {
-                    await refreshAccess();
-                    const retryResponse = await api.get('/api/users/myuserdata');
-                    setUser(retryResponse.data);
-                } catch (refreshError) {
-                    setUser(null);
-                    clearAccess();
-                }
-            } else {
-                setUser(null);
-                clearAccess();
-            }
+            setUser(null);
+            clearAccess();
         } finally {
             setLoading(false);
         }
-    }, [saveAccess, refreshAccess, clearAccess]);
+    }, [clearAccess]);
 
     useEffect(() => {
         checkLoginStatus();
     }, [checkLoginStatus]);
+
+    useEffect(() => {
+        const handleLoginSuccess = async () => {
+            const params = new URLSearchParams(location.search);
+            const loginSuccess = params.get('login_success');
+
+            if (loginSuccess === 'true') {
+                try {
+                    // 액세스 토큰을 받아오기 위한 요청
+                    const tokenResponse = await api.get('/oauth2/authorization/google');
+                    const { accessToken } = tokenResponse.data;
+
+                    saveAccess(accessToken);
+
+                    // 사용자 정보 가져오기
+                    const userResponse = await api.get('/api/users/myuserdata', {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    setUser(userResponse.data);
+                    toast.success('로그인되었습니다.');
+                    navigate('/', { replace: true });
+                } catch (error) {
+                    console.error('Failed to fetch token or user data:', error);
+                    toast.error('로그인 처리 중 오류가 발생했습니다.');
+                    clearAccess();
+                }
+            }
+        };
+
+        handleLoginSuccess();
+    }, [location, saveAccess, clearAccess, navigate]);
 
     useEffect(() => {
         const requestInterceptor = api.interceptors.request.use(
@@ -126,16 +114,10 @@ function AppContent() {
         const responseInterceptor = api.interceptors.response.use(
             (response) => response,
             async (error) => {
-                const originalRequest = error.config;
-                if (error.response.status === 401 && !originalRequest._retry) {
-                    originalRequest._retry = true;
-                    try {
-                        const newAccess = await refreshAccess();
-                        originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
-                        return api(originalRequest);
-                    } catch (refreshError) {
-                        return Promise.reject(refreshError);
-                    }
+                if (error.response && error.response.status === 401) {
+                    clearAccess();
+                    setUser(null);
+                    navigate('/login');
                 }
                 return Promise.reject(error);
             }
@@ -145,7 +127,7 @@ function AppContent() {
             api.interceptors.request.eject(requestInterceptor);
             api.interceptors.response.eject(responseInterceptor);
         };
-    }, [refreshAccess]);
+    }, [clearAccess, navigate]);
 
     const handleLogin = () => {
         // 백엔드의 OAuth 시작 엔드포인트로 리다이렉트
@@ -154,24 +136,12 @@ function AppContent() {
 
     const handleLogout = async () => {
         try {
-            await api.get('/logout');
+            await api.post('/logout');
             setUser(null);
             clearAccess();
             localStorage.clear();
             sessionStorage.clear();
-            // Clear refresh token cookie
-            document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-
-            const googleLogoutUrl = "https://accounts.google.com/Logout";
-            const googleLogoutWindow = window.open(googleLogoutUrl, '_blank', 'width=1,height=1');
-
-            setTimeout(() => {
-                if (googleLogoutWindow) {
-                    googleLogoutWindow.close();
-                }
-                navigate('/');
-            }, 2000);
-
+            navigate('/');
             toast.success('로그아웃되었습니다.');
         } catch (error) {
             console.error('로그아웃 실패:', error);
@@ -191,7 +161,7 @@ function AppContent() {
     };
 
     return (
-        <UserContext.Provider value={{ user, setUser, access, setAccess: saveAccess, refreshAccess }}>
+        <UserContext.Provider value={{ user, setUser, access, setAccess: saveAccess }}>
             <div className="app-container">
                 <header className="app-header">
                     <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
@@ -209,13 +179,6 @@ function AppContent() {
                             <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList user={user} /></ProtectedRoute>} />
                             <Route path="/quiz" element={<ProtectedRoute><QuizPage user={user} /></ProtectedRoute>} />
                             <Route path="/quiz-result" element={<ProtectedRoute><QuizResult user={user} /></ProtectedRoute>} />
-                            <Route path="/auth-callback" element={
-                                <AuthCallback
-                                    checkLoginStatus={checkLoginStatus}
-                                    saveAccessToken={saveAccess}
-                                    saveRefreshToken={saveRefreshToken}
-                                />
-                            } />
                         </Routes>
                     </main>
                 </div>
