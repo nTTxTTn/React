@@ -5,7 +5,7 @@ import axios from 'axios';
 import { UserContext } from './App';
 
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL,
+    baseURL: '',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
@@ -34,8 +34,9 @@ function CreateWordList() {
     const refreshToken = async () => {
         try {
             const response = await api.post('/reissue');
-            setAccessToken(response.data.accessToken);
-            return response.data.accessToken;
+            const newToken = response.data.accessToken;
+            setAccessToken(newToken);
+            return newToken;
         } catch (error) {
             console.error('Failed to refresh token:', error);
             throw error;
@@ -44,13 +45,12 @@ function CreateWordList() {
 
     const handleApiCall = async (apiFunc) => {
         try {
-            return await apiFunc();
+            return await apiFunc(accessToken);
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 try {
                     const newToken = await refreshToken();
-                    api.defaults.headers['Authorization'] = `Bearer ${newToken}`;
-                    return await apiFunc();
+                    return await apiFunc(newToken);
                 } catch (refreshError) {
                     console.error('Token refresh failed:', refreshError);
                     navigate('/login');
@@ -71,9 +71,9 @@ function CreateWordList() {
         setSuccessMessage(null);
         try {
             console.log('Sending request to create word list:', { title });
-            const response = await handleApiCall(() =>
-                api.post('/api/vocalist/create', { title }, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
+            const response = await handleApiCall((token) =>
+                api.post('http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080/api/vocalist/create', { title }, {
+                    headers: { Authorization: `Bearer ${token}` }
                 })
             );
             console.log('Word list creation response:', response);
@@ -107,9 +107,9 @@ function CreateWordList() {
                 sampleSentence: currentWord.sampleSentence || ''
             };
             console.log('Sending request to add word:', newWord);
-            const response = await handleApiCall(() =>
-                api.post(`/api/vocacontent/create/${vocalistId}`, newWord, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
+            const response = await handleApiCall((token) =>
+                api.post(`http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080/api/vocacontent/create/${vocalistId}`, newWord, {
+                    headers: { Authorization: `Bearer ${token}` }
                 })
             );
             console.log('Word addition response:', response);

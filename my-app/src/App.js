@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,6 +15,7 @@ import WordListPage from "./WordListPage";
 import EditWordList from "./EditWordList";
 import QuizPage from "./QuizPage";
 import QuizResult from "./QuizResult";
+import AuthCallback from './AuthCallback';
 import './App.css';
 
 export const UserContext = createContext(null);
@@ -27,120 +28,44 @@ const api = axios.create({
 function AppContent() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [access, setAccess] = useState(() => localStorage.getItem('access'));
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const saveAccess = useCallback((token) => {
-        setAccess(token);
-        localStorage.setItem('access', token);
-    }, []);
-
-    const clearAccess = useCallback(() => {
-        setAccess(null);
-        localStorage.removeItem('access');
-    }, []);
 
     const checkLoginStatus = useCallback(async () => {
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            setUser(null);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
-            const storedAccess = localStorage.getItem('access');
-            if (!storedAccess) {
-                setUser(null);
-                setLoading(false);
-                return;
-            }
-            setAccess(storedAccess);
-            const response = await api.get('/api/users/myuserdata', {
-                headers: { 'Authorization': `Bearer ${storedAccess}` }
+            const response = await api.get('/users/myuserdata', {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             setUser(response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
             setUser(null);
-            clearAccess();
+            localStorage.removeItem('accessToken');
         } finally {
             setLoading(false);
         }
-    }, [clearAccess]);
+    }, []);
 
     useEffect(() => {
         checkLoginStatus();
     }, [checkLoginStatus]);
 
-    useEffect(() => {
-        const handleLoginSuccess = async () => {
-            const params = new URLSearchParams(location.search);
-            const loginSuccess = params.get('login_success');
-
-            if (loginSuccess === 'true') {
-                try {
-                    // 액세스 토큰을 받아오기 위한 요청
-                    const tokenResponse = await api.get('/oauth2/authorization/google');
-                    const { accessToken } = tokenResponse.data;
-
-                    saveAccess(accessToken);
-
-                    // 사용자 정보 가져오기
-                    const userResponse = await api.get('/api/users/myuserdata', {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    setUser(userResponse.data);
-                    toast.success('로그인되었습니다.');
-                    navigate('/', { replace: true });
-                } catch (error) {
-                    console.error('Failed to fetch token or user data:', error);
-                    toast.error('로그인 처리 중 오류가 발생했습니다.');
-                    clearAccess();
-                }
-            }
-        };
-
-        handleLoginSuccess();
-    }, [location, saveAccess, clearAccess, navigate]);
-
-    useEffect(() => {
-        const requestInterceptor = api.interceptors.request.use(
-            (config) => {
-                const storedAccess = localStorage.getItem('access');
-                if (storedAccess) {
-                    config.headers['Authorization'] = `Bearer ${storedAccess}`;
-                }
-                return config;
-            },
-            (error) => Promise.reject(error)
-        );
-
-        const responseInterceptor = api.interceptors.response.use(
-            (response) => response,
-            async (error) => {
-                if (error.response && error.response.status === 401) {
-                    clearAccess();
-                    setUser(null);
-                    navigate('/login');
-                }
-                return Promise.reject(error);
-            }
-        );
-
-        return () => {
-            api.interceptors.request.eject(requestInterceptor);
-            api.interceptors.response.eject(responseInterceptor);
-        };
-    }, [clearAccess, navigate]);
-
     const handleLogin = () => {
-        // 백엔드의 OAuth 시작 엔드포인트로 리다이렉트
-        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google`;
+        window.location.href = `http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080/api/oauth2/authorization/google?prompt=select_account`;
     };
 
     const handleLogout = async () => {
         try {
-            await api.post('/logout');
+            await api.get('/logout');
             setUser(null);
-            clearAccess();
-            localStorage.clear();
-            sessionStorage.clear();
+            localStorage.removeItem('accessToken');
             navigate('/');
             toast.success('로그아웃되었습니다.');
         } catch (error) {
@@ -148,6 +73,43 @@ function AppContent() {
             toast.error(`로그아웃에 실패했습니다: ${error.message}`);
         }
     };
+
+    const refreshToken = async () => {
+        try {
+            const response = await api.post('/reissue');
+            const { accessToken } = response.data;
+            localStorage.setItem('accessToken', accessToken);
+            return accessToken;
+        } catch (error) {
+            console.error('토큰 리프레시 실패:', error);
+            throw error;
+        }
+    };
+
+    useEffect(() => {
+        const interceptor = api.interceptors.response.use(
+            (response) => response,
+            async (error) => {
+                const originalRequest = error.config;
+                if (error.response.status === 401 && !originalRequest._retry) {
+                    originalRequest._retry = true;
+                    try {
+                        const newAccessToken = await refreshToken();
+                        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                        return api(originalRequest);
+                    } catch (refreshError) {
+                        handleLogout();
+                        return Promise.reject(refreshError);
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            api.interceptors.response.eject(interceptor);
+        };
+    }, [handleLogout]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -160,8 +122,12 @@ function AppContent() {
         return children;
     };
 
+    const saveAccessToken = (token) => {
+        localStorage.setItem('accessToken', token);
+    };
+
     return (
-        <UserContext.Provider value={{ user, setUser, access, setAccess: saveAccess }}>
+        <UserContext.Provider value={{ user, setUser }}>
             <div className="app-container">
                 <header className="app-header">
                     <LoginButton user={user} onLogin={handleLogin} onLogout={handleLogout} />
@@ -179,6 +145,7 @@ function AppContent() {
                             <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList user={user} /></ProtectedRoute>} />
                             <Route path="/quiz" element={<ProtectedRoute><QuizPage user={user} /></ProtectedRoute>} />
                             <Route path="/quiz-result" element={<ProtectedRoute><QuizResult user={user} /></ProtectedRoute>} />
+                            <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} saveAccessToken={saveAccessToken} />} />
                         </Routes>
                     </main>
                 </div>
