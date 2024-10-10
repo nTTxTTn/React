@@ -24,10 +24,12 @@ FROM nginx:alpine
 # Copy the build output to replace the default nginx contents.
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy a default nginx configuration
+# Create a simple nginx configuration for serving on port 3000
 RUN echo $'\
 server {\n\
     listen 3000;\n\
+    server_name localhost;\n\
+\n\
     location / {\n\
         root   /usr/share/nginx/html;\n\
         index  index.html index.htm;\n\

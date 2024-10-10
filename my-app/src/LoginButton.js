@@ -37,7 +37,9 @@ function LoginButton({ user, onLogin, onLogout }) {
             ) : (
                 <button className="google-btn" onClick={handleLogin}>
                     <div className="google-icon-wrapper">
-                        <img className="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google logo"/>
+                        <img className="google-icon"
+                             src="https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_clr_74x24px.svg"
+                             alt="Google logo"/>
                     </div>
                     <p className="btn-text"><b>Sign in with Google</b></p>
                 </button>

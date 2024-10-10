@@ -58,7 +58,7 @@ function AppContent() {
     }, [checkLoginStatus]);
 
     const handleLogin = () => {
-        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
+        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/login/oauth2/code/google`;
     };
 
     const handleLogout = async () => {
@@ -76,7 +76,7 @@ function AppContent() {
 
     const refreshToken = async () => {
         try {
-            const response = await api.post('/reissue');
+            const response = await api.get('/reissue');
             const { accessToken } = response.data;
             localStorage.setItem('accessToken', accessToken);
             return accessToken;
