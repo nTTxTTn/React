@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import Cookies from 'js-cookie';
 import LoadingSpinner from './LoadingSpinner';
 
 function AuthCallback({ checkLoginStatus, saveAccessToken }) {
@@ -13,17 +12,10 @@ function AuthCallback({ checkLoginStatus, saveAccessToken }) {
         const handleCallback = async () => {
             const urlParams = new URLSearchParams(location.search);
             const accessToken = urlParams.get('accessToken');
-            const refreshToken = urlParams.get('refreshToken');
 
-            if (accessToken && refreshToken) {
+            if (accessToken) {
                 try {
                     saveAccessToken(accessToken);
-
-                    // Save refresh token in a cookie
-                    Cookies.set('refreshToken', refreshToken, {
-                        expires: 7,
-                    });
-
                     await checkLoginStatus();
                     toast.success('로그인 성공!');
                     navigate('/');
@@ -33,7 +25,7 @@ function AuthCallback({ checkLoginStatus, saveAccessToken }) {
                     navigate('/login');
                 }
             } else {
-                console.error('Access token or refresh token not found in URL parameters');
+                console.error('Access token not found in URL parameters');
                 toast.error('인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.');
                 navigate('/login');
             }

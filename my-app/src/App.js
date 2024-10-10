@@ -15,7 +15,7 @@ import WordListPage from "./WordListPage";
 import EditWordList from "./EditWordList";
 import QuizPage from "./QuizPage";
 import QuizResult from "./QuizResult";
-import AuthCallback from './AuthCallback';
+import AuthCallback from './AuthCallback';  // 새로 추가
 import './App.css';
 
 export const UserContext = createContext(null);
@@ -40,7 +40,7 @@ function AppContent() {
 
         try {
             setLoading(true);
-            const response = await api.get('/users/myuserdata', {
+            const response = await api.get('/api/users/myuserdata', {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
             setUser(response.data);
@@ -58,12 +58,12 @@ function AppContent() {
     }, [checkLoginStatus]);
 
     const handleLogin = () => {
-        window.location.href = `http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080/api/oauth2/authorization/google?prompt=select_account`;
+        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
     };
 
     const handleLogout = async () => {
         try {
-            await api.get('/logout');
+            await api.post('/logout');
             setUser(null);
             localStorage.removeItem('accessToken');
             navigate('/');

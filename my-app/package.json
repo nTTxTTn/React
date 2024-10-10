@@ -14,7 +14,6 @@
     "@types/google-one-tap": "^1.2.6",
     "axios": "^1.7.4",
     "dotenv": "^16.4.5",
-    "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -47,6 +46,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080"
+  }
 }

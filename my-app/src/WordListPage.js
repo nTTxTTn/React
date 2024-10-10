@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 function WordListPage() {
-    const { user } = useContext(UserContext);
+    const { user, accessToken, setAccessToken } = useContext(UserContext);
     const [wordLists, setWordLists] = useState([]);
     const [isGridView, setIsGridView] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,33 +30,26 @@ function WordListPage() {
         try {
             setError(null);
             setLoading(true);
-            const endpoint = user && !showPublicLists ? '/uservocalist' : '/vocalist/showall';
+            const endpoint = user && !showPublicLists ? '/api/uservocalist' : '/api/vocalist/showall';
             console.log(`Fetching word lists from: ${endpoint}`);
 
             let response;
-            if (endpoint === '/uservocalist') {
-                const accessToken = localStorage.getItem('accessToken');
-                if (!accessToken) {
-                    throw new Error('액세스 토큰이 없습니다.');
-                }
-                try {
+            try {
+                response = await api.get(endpoint, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                    maxRedirects: 0,
+                });
+            } catch (error) {
+                if (error.response && error.response.status === 401) {
+                    const refreshResponse = await api.post('/reissue');
+                    setAccessToken(refreshResponse.data.accessToken);
                     response = await api.get(endpoint, {
-                        headers: { Authorization: `Bearer ${accessToken}` },
+                        headers: { Authorization: `Bearer ${refreshResponse.data.accessToken}` },
+                        maxRedirects: 0,
                     });
-                } catch (error) {
-                    if (error.response && error.response.status === 401) {
-                        const refreshResponse = await api.post('/reissue');
-                        localStorage.setItem('accessToken', refreshResponse.data.accessToken);
-                        response = await api.get(endpoint, {
-                            headers: { Authorization: `Bearer ${refreshResponse.data.accessToken}` },
-                        });
-                    } else {
-                        throw error;
-                    }
+                } else {
+                    throw error;
                 }
-            } else {
-                // 공개 단어장 요청 시 액세스 토큰 불필요
-                response = await api.get(endpoint);
             }
 
             let lists = [];
@@ -71,14 +64,11 @@ function WordListPage() {
             }
 
             const processedLists = await Promise.all(lists.map(async item => {
-                const listData = endpoint === '/uservocalist' ? item.vocaListEntity : item;
-                let wordCount = 0;
-                try {
-                    const wordCountResponse = await api.get(`/vocacontent/showall/${listData.id}`);
-                    wordCount = Array.isArray(wordCountResponse.data) ? wordCountResponse.data.length : 0;
-                } catch (error) {
-                    console.error('Error fetching word count:', error);
-                }
+                const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
+                const wordCountResponse = await api.get(`/api/vocacontent/showall/${listData.id}`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                const wordCount = Array.isArray(wordCountResponse.data) ? wordCountResponse.data.length : 0;
 
                 return {
                     id: listData.id,
@@ -86,7 +76,7 @@ function WordListPage() {
                     wordCount: wordCount,
                     author: listData.email,
                     isPublic: listData.secret === 1,
-                    userName: (endpoint === '/uservocalist' ? item.userEntity?.name : null) || listData.email.split('@')[0]
+                    userName: (endpoint === '/api/uservocalist' ? item.userEntity?.name : null) || listData.email.split('@')[0]
                 };
             }));
 
@@ -107,8 +97,7 @@ function WordListPage() {
     const deleteWordList = async (id) => {
         if (window.confirm('이 단어장을 삭제하시겠습니까?')) {
             try {
-                const accessToken = localStorage.getItem('accessToken');
-                await api.delete(`/vocalist/delete/${id}`, {
+                await api.delete(`/api/vocalist/delete/${id}`, {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 });
                 fetchWordLists();
@@ -126,8 +115,7 @@ function WordListPage() {
 
     const togglePublic = async (id, isPublic) => {
         try {
-            const accessToken = localStorage.getItem('accessToken');
-            const endpoint = isPublic ? `/vocalist/${id}/editsecret/close` : `/vocalist/${id}/editsecret/open`;
+            const endpoint = isPublic ? `/api/vocalist/${id}/editsecret/close` : `/api/vocalist/${id}/editsecret/open`;
             await api.get(endpoint, {
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
