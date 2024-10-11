@@ -58,7 +58,7 @@ function AppContent() {
     }, [checkLoginStatus]);
 
     const handleLogin = () => {
-        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/login/oauth2/code/google`;
+        window.location.href = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/google?prompt=select_account`;
     };
 
     const handleLogout = async () => {
