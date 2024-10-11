@@ -41,7 +41,7 @@ function AppContent() {
         try {
             setLoading(true);
             const response = await api.get('/api/users/myuserdata', {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 'access': `Bearer ${accessToken}` }
             });
             setUser(response.data);
         } catch (error) {
@@ -95,7 +95,7 @@ function AppContent() {
                     originalRequest._retry = true;
                     try {
                         const newAccessToken = await refreshToken();
-                        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                        originalRequest.headers['access'] = `Bearer ${newAccessToken}`;
                         return api(originalRequest);
                     } catch (refreshError) {
                         handleLogout();
