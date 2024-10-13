@@ -15,7 +15,6 @@ import WordListPage from "./WordListPage";
 import EditWordList from "./EditWordList";
 import QuizPage from "./QuizPage";
 import QuizResult from "./QuizResult";
-import AuthCallback from './AuthCallback';  // 새로 추가
 import './App.css';
 
 export const UserContext = createContext(null);
@@ -25,33 +24,76 @@ const api = axios.create({
     withCredentials: true
 });
 
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("Uncaught error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return <h1>Something went wrong. Please try refreshing the page.</h1>;
+        }
+
+        return this.props.children;
+    }
+}
+
 function AppContent() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const checkLoginStatus = useCallback(async () => {
-        const accessToken = localStorage.getItem('accessToken');
-        if (!accessToken) {
-            setUser(null);
-            setLoading(false);
-            return;
+    const refreshAccessToken = async () => {
+        try {
+            const response = await api.post('/reissue');
+            console.log('Access token refreshed');
+            return response.data;
+        } catch (error) {
+            console.error('Failed to refresh access token:', error);
+            throw error;
         }
+    };
 
+    const checkLoginStatus = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await api.get('/api/users/myuserdata', {
-                headers: { 'access': `Bearer ${accessToken}` }
-            });
+            const response = await api.get('/api/users/myuserdata');
             setUser(response.data);
+            console.log('Current user:', response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
-            setUser(null);
-            localStorage.removeItem('accessToken');
+            if (error.response && error.response.status === 401) {
+                try {
+                    await refreshAccessToken();
+                    const retryResponse = await api.get('/api/users/myuserdata');
+                    setUser(retryResponse.data);
+                } catch (refreshError) {
+                    console.error('Failed to refresh token:', refreshError);
+                    setUser(null);
+                    navigate('/login');
+                }
+            } else {
+                setUser(null);
+                if (error.response && error.response.status === 403) {
+                    toast.error('접근 권한이 없습니다. 로그인이 필요합니다.');
+                    navigate('/login');
+                } else if (error.message === 'Network Error') {
+                    toast.error('서버와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                }
+            }
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         checkLoginStatus();
@@ -66,7 +108,6 @@ function AppContent() {
         try {
             await api.post('/logout');
             setUser(null);
-            localStorage.removeItem('accessToken');
             navigate('/');
             toast.success('로그아웃되었습니다.');
         } catch (error) {
@@ -75,31 +116,19 @@ function AppContent() {
         }
     };
 
-    const refreshToken = async () => {
-        try {
-            const response = await api.get('/reissue');
-            const { accessToken } = response.data;
-            localStorage.setItem('accessToken', accessToken);
-            return accessToken;
-        } catch (error) {
-            console.error('토큰 리프레시 실패:', error);
-            throw error;
-        }
-    };
-
     useEffect(() => {
         const interceptor = api.interceptors.response.use(
             (response) => response,
             async (error) => {
                 const originalRequest = error.config;
-                if (error.response.status === 401 && !originalRequest._retry) {
+                if (error.response && error.response.status === 401 && !originalRequest._retry) {
                     originalRequest._retry = true;
                     try {
-                        const newAccessToken = await refreshToken();
-                        originalRequest.headers['access'] = `Bearer ${newAccessToken}`;
+                        await refreshAccessToken();
                         return api(originalRequest);
                     } catch (refreshError) {
-                        handleLogout();
+                        setUser(null);
+                        navigate('/login');
                         return Promise.reject(refreshError);
                     }
                 }
@@ -110,7 +139,7 @@ function AppContent() {
         return () => {
             api.interceptors.response.eject(interceptor);
         };
-    }, [handleLogout]);
+    }, [navigate]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -121,10 +150,6 @@ function AppContent() {
             return <Navigate to="/login" />;
         }
         return children;
-    };
-
-    const saveAccessToken = (token) => {
-        localStorage.setItem('accessToken', token);
     };
 
     return (
@@ -146,7 +171,6 @@ function AppContent() {
                             <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList user={user} /></ProtectedRoute>} />
                             <Route path="/quiz" element={<ProtectedRoute><QuizPage user={user} /></ProtectedRoute>} />
                             <Route path="/quiz-result" element={<ProtectedRoute><QuizResult user={user} /></ProtectedRoute>} />
-                            <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} saveAccessToken={saveAccessToken} />} />
                         </Routes>
                     </main>
                 </div>
@@ -158,11 +182,13 @@ function AppContent() {
 
 function App() {
     return (
-        <ThemeProvider>
-            <Router>
-                <AppContent />
-            </Router>
-        </ThemeProvider>
+        <ErrorBoundary>
+            <ThemeProvider>
+                <Router>
+                    <AppContent />
+                </Router>
+            </ThemeProvider>
+        </ErrorBoundary>
     );
 }
 
