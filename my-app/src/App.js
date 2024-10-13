@@ -50,6 +50,7 @@ class ErrorBoundary extends React.Component {
 function AppContent() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [initialCheckDone, setInitialCheckDone] = useState(false);
     const navigate = useNavigate();
 
     const refreshAccessToken = async () => {
@@ -79,21 +80,20 @@ function AppContent() {
                 } catch (refreshError) {
                     console.error('Failed to refresh token:', refreshError);
                     setUser(null);
-                    navigate('/login');
                 }
             } else {
                 setUser(null);
                 if (error.response && error.response.status === 403) {
                     toast.error('접근 권한이 없습니다. 로그인이 필요합니다.');
-                    navigate('/login');
                 } else if (error.message === 'Network Error') {
                     toast.error('서버와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
                 }
             }
         } finally {
             setLoading(false);
+            setInitialCheckDone(true);
         }
-    }, [navigate]);
+    }, []);
 
     useEffect(() => {
         checkLoginStatus();
@@ -106,7 +106,7 @@ function AppContent() {
 
     const handleLogout = async () => {
         try {
-            await api.post('/logout');
+            await api.get('/logout');
             setUser(null);
             navigate('/');
             toast.success('로그아웃되었습니다.');
@@ -128,7 +128,6 @@ function AppContent() {
                         return api(originalRequest);
                     } catch (refreshError) {
                         setUser(null);
-                        navigate('/login');
                         return Promise.reject(refreshError);
                     }
                 }
@@ -139,9 +138,9 @@ function AppContent() {
         return () => {
             api.interceptors.response.eject(interceptor);
         };
-    }, [navigate]);
+    }, []);
 
-    if (loading) {
+    if (!initialCheckDone) {
         return <LoadingSpinner />;
     }
 
@@ -162,7 +161,7 @@ function AppContent() {
                     <Sidebar />
                     <main className="main-content">
                         <Routes>
-                            <Route path="/login" element={user ? <Navigate to="/" /> : <LoginButton onLogin={handleLogin} />} />
+                            <Route path="/login" element={<Navigate to="/" />} />
                             <Route path="/" element={<HomePage user={user} />} />
                             <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList user={user} /></ProtectedRoute>} />
                             <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
