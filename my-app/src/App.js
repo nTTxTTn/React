@@ -75,15 +75,17 @@ function AppContent() {
             setLoading(true);
             console.log('Attempting to fetch user data with token');
             const response = await api.get('/api/users/myuserdata', {
-                headers: { Authorization: `Bearer ${accessToken}` }
+                headers: { Authorization: `Bearer ${accessToken}` },
+                withCredentials: true,
+                maxRedirects: 0
             });
             setUser(response.data);
             console.log('User data fetched successfully:', response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
             console.log('Error details:', error.response ? error.response.data : 'No response data');
-            setUser(null);
-            localStorage.removeItem('accessToken');
+            //setUser(null);
+            //localStorage.removeItem('accessToken');
             console.log('Token removed from localStorage due to error');
             if (error.response && error.response.status === 403) {
                 toast.error('접근 권한이 없습니다. 로그인이 필요합니다.');
