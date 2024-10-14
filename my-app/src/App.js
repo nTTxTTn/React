@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Cookies from 'js-cookie';
 import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
@@ -15,6 +14,7 @@ import WordListDetail from "./WordListDetail";
 import WordListPage from "./WordListPage";
 import EditWordList from "./EditWordList";
 import QuizPage from "./QuizPage";
+import AuthCallback from './AuthCallback';
 import QuizResult from "./QuizResult";
 import './App.css';
 
@@ -54,40 +54,17 @@ function AppContent() {
     const [initialCheckDone, setInitialCheckDone] = useState(false);
     const navigate = useNavigate();
 
-    const refreshAccessToken = async () => {
-        try {
-            const refreshToken = Cookies.get('refresh');
-            console.log('Attempting to refresh access token with refresh token:', refreshToken ? 'Found' : 'Not found');
-
-            const response = await api.post('/reissue', { refreshToken });
-            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
-
-            console.log('New access token received:', newAccessToken ? 'Success' : 'Failed');
-            console.log('New refresh token received:', newRefreshToken ? 'Success' : 'Failed');
-
-            Cookies.set('Authorization', newAccessToken);
-            if (newRefreshToken) {
-                Cookies.set('refresh', newRefreshToken);
-            }
-
-            console.log('Access token refreshed and saved in cookies');
-            return newAccessToken;
-        } catch (error) {
-            console.error('Failed to refresh access token:', error);
-            console.log('Error details:', error.response ? error.response.data : 'No response data');
-            throw error;
-        }
+    const saveAccessToken = (token) => {
+        localStorage.setItem('accessToken', token);
     };
 
     const checkLoginStatus = useCallback(async () => {
-        const accessToken = Cookies.get('Authorization');
-        const refreshToken = Cookies.get('refresh');
+        const accessToken = localStorage.getItem('accessToken');
 
         console.log('Access Token:', accessToken ? 'Found' : 'Not found');
-        console.log('Refresh Token:', refreshToken ? 'Found' : 'Not found');
 
-        if (!accessToken && !refreshToken) {
-            console.log('No tokens found. User is not logged in.');
+        if (!accessToken) {
+            console.log('No token found. User is not logged in.');
             setUser(null);
             setLoading(false);
             setInitialCheckDone(true);
@@ -96,32 +73,18 @@ function AppContent() {
 
         try {
             setLoading(true);
-            let token = accessToken;
-
-            if (!accessToken && refreshToken) {
-                console.log('No access token, but refresh token found. Attempting to refresh...');
-                token = await refreshAccessToken();
-                console.log('New access token obtained:', token ? 'Success' : 'Failed');
-            }
-
-            if (token) {
-                console.log('Attempting to fetch user data with token');
-                const response = await api.get('/api/users/myuserdata', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setUser(response.data);
-                console.log('User data fetched successfully:', response.data);
-            } else {
-                console.log('No valid token available after refresh attempt');
-                throw new Error('No valid token available');
-            }
+            console.log('Attempting to fetch user data with token');
+            const response = await api.get('/api/users/myuserdata', {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            setUser(response.data);
+            console.log('User data fetched successfully:', response.data);
         } catch (error) {
             console.error('Failed to fetch user data:', error);
             console.log('Error details:', error.response ? error.response.data : 'No response data');
             setUser(null);
-            Cookies.remove('Authorization');
-            Cookies.remove('refresh');
-            console.log('Tokens removed from cookies due to error');
+            localStorage.removeItem('accessToken');
+            console.log('Token removed from localStorage due to error');
             if (error.response && error.response.status === 403) {
                 toast.error('접근 권한이 없습니다. 로그인이 필요합니다.');
             } else if (error.message === 'Network Error') {
@@ -145,36 +108,26 @@ function AppContent() {
 
     const handleLogout = async () => {
         try {
-            await api.get('/logout');
+            await api.get('/logout');  // Call the backend logout API
             setUser(null);
-            Cookies.remove('Authorization');
-            Cookies.remove('refresh');
+            localStorage.removeItem('accessToken');
             navigate('/');
             toast.success('로그아웃되었습니다.');
         } catch (error) {
             console.error('로그아웃 실패:', error);
-            toast.error(`로그아웃에 실패했습니다: ${error.message}`);
+            toast.error('로그아웃 처리 중 오류가 발생했습니다.');
         }
     };
-
 
     useEffect(() => {
         const interceptor = api.interceptors.response.use(
             (response) => response,
-            async (error) => {
-                const originalRequest = error.config;
-                if (error.response && error.response.status === 401 && !originalRequest._retry) {
-                    originalRequest._retry = true;
-                    try {
-                        const newAccessToken = await refreshAccessToken();
-                        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-                        return api(originalRequest);
-                    } catch (refreshError) {
-                        setUser(null);
-                        Cookies.remove('Authorization');
-                        Cookies.remove('refresh');
-                        return Promise.reject(refreshError);
-                    }
+            (error) => {
+                if (error.response && error.response.status === 401) {
+                    setUser(null);
+                    localStorage.removeItem('accessToken');
+                    toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+                    navigate('/');
                 }
                 return Promise.reject(error);
             }
@@ -183,18 +136,11 @@ function AppContent() {
         return () => {
             api.interceptors.response.eject(interceptor);
         };
-    }, []);
+    }, [navigate]);
 
     if (!initialCheckDone) {
         return <LoadingSpinner />;
     }
-
-    const ProtectedRoute = ({ children }) => {
-        if (!user) {
-            return <Navigate to="/login" />;
-        }
-        return children;
-    };
 
     return (
         <UserContext.Provider value={{ user, setUser }}>
@@ -208,13 +154,14 @@ function AppContent() {
                         <Routes>
                             <Route path="/login" element={<Navigate to="/" />} />
                             <Route path="/" element={<HomePage user={user} />} />
-                            <Route path="/create-wordlist" element={<ProtectedRoute><CreateWordList user={user} /></ProtectedRoute>} />
-                            <Route path="/flashcard/:id" element={<ProtectedRoute><FlashcardView /></ProtectedRoute>} />
+                            <Route path="/create-wordlist" element={<CreateWordList user={user} />} />
+                            <Route path="/flashcard/:id" element={<FlashcardView />} />
                             <Route path="/wordlist/:id" element={<WordListDetail user={user} />} />
                             <Route path="/words" element={<WordListPage user={user} />} />
-                            <Route path="/edit-wordlist/:id" element={<ProtectedRoute><EditWordList user={user} /></ProtectedRoute>} />
-                            <Route path="/quiz" element={<ProtectedRoute><QuizPage user={user} /></ProtectedRoute>} />
-                            <Route path="/quiz-result" element={<ProtectedRoute><QuizResult user={user} /></ProtectedRoute>} />
+                            <Route path="/edit-wordlist/:id" element={<EditWordList user={user} />} />
+                            <Route path="/quiz" element={<QuizPage user={user} />} />
+                            <Route path="/quiz-result" element={<QuizResult user={user} />} />
+                            <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} saveAccessToken={saveAccessToken} />} />
                         </Routes>
                     </main>
                 </div>

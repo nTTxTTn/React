@@ -1,4 +1,4 @@
-/*import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import LoadingSpinner from './LoadingSpinner';
@@ -42,4 +42,4 @@ function AuthCallback({ checkLoginStatus, saveAccessToken }) {
     return null;
 }
 
-export default AuthCallback;*/
+export default AuthCallback;
