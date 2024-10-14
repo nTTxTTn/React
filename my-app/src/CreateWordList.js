@@ -72,7 +72,7 @@ function CreateWordList() {
         try {
             console.log('Sending request to create word list:', { title });
             const response = await handleApiCall((token) =>
-                api.post('http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080/api/vocalist/create', { title }, {
+                api.post('/api/vocalist/create', { title }, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
             );
@@ -108,7 +108,7 @@ function CreateWordList() {
             };
             console.log('Sending request to add word:', newWord);
             const response = await handleApiCall((token) =>
-                api.post(`http://ec2-15-164-103-179.ap-northeast-2.compute.amazonaws.com:8080/api/vocacontent/create/${vocalistId}`, newWord, {
+                api.post(`/api/vocacontent/create/${vocalistId}`, newWord, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
             );

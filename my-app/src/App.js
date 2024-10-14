@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Cookies from 'js-cookie';
 import { ThemeProvider } from './ThemeContext';
 import LoginButton from './LoginButton';
 import Sidebar from './Sidebar';
@@ -55,43 +56,81 @@ function AppContent() {
 
     const refreshAccessToken = async () => {
         try {
-            const response = await api.post('/reissue');
-            console.log('Access token refreshed');
-            return response.data;
+            const refreshToken = Cookies.get('refresh');
+            console.log('Attempting to refresh access token with refresh token:', refreshToken ? 'Found' : 'Not found');
+
+            const response = await api.post('/reissue', { refreshToken });
+            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+
+            console.log('New access token received:', newAccessToken ? 'Success' : 'Failed');
+            console.log('New refresh token received:', newRefreshToken ? 'Success' : 'Failed');
+
+            Cookies.set('Authorization', newAccessToken);
+            if (newRefreshToken) {
+                Cookies.set('refresh', newRefreshToken);
+            }
+
+            console.log('Access token refreshed and saved in cookies');
+            return newAccessToken;
         } catch (error) {
             console.error('Failed to refresh access token:', error);
+            console.log('Error details:', error.response ? error.response.data : 'No response data');
             throw error;
         }
     };
 
     const checkLoginStatus = useCallback(async () => {
+        const accessToken = Cookies.get('Authorization');
+        const refreshToken = Cookies.get('refresh');
+
+        console.log('Access Token:', accessToken ? 'Found' : 'Not found');
+        console.log('Refresh Token:', refreshToken ? 'Found' : 'Not found');
+
+        if (!accessToken && !refreshToken) {
+            console.log('No tokens found. User is not logged in.');
+            setUser(null);
+            setLoading(false);
+            setInitialCheckDone(true);
+            return;
+        }
+
         try {
             setLoading(true);
-            const response = await api.get('/api/users/myuserdata');
-            setUser(response.data);
-            console.log('Current user:', response.data);
+            let token = accessToken;
+
+            if (!accessToken && refreshToken) {
+                console.log('No access token, but refresh token found. Attempting to refresh...');
+                token = await refreshAccessToken();
+                console.log('New access token obtained:', token ? 'Success' : 'Failed');
+            }
+
+            if (token) {
+                console.log('Attempting to fetch user data with token');
+                const response = await api.get('/api/users/myuserdata', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setUser(response.data);
+                console.log('User data fetched successfully:', response.data);
+            } else {
+                console.log('No valid token available after refresh attempt');
+                throw new Error('No valid token available');
+            }
         } catch (error) {
             console.error('Failed to fetch user data:', error);
-            if (error.response && error.response.status === 401) {
-                try {
-                    await refreshAccessToken();
-                    const retryResponse = await api.get('/api/users/myuserdata');
-                    setUser(retryResponse.data);
-                } catch (refreshError) {
-                    console.error('Failed to refresh token:', refreshError);
-                    setUser(null);
-                }
-            } else {
-                setUser(null);
-                if (error.response && error.response.status === 403) {
-                    toast.error('접근 권한이 없습니다. 로그인이 필요합니다.');
-                } else if (error.message === 'Network Error') {
-                    toast.error('서버와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
-                }
+            console.log('Error details:', error.response ? error.response.data : 'No response data');
+            setUser(null);
+            Cookies.remove('Authorization');
+            Cookies.remove('refresh');
+            console.log('Tokens removed from cookies due to error');
+            if (error.response && error.response.status === 403) {
+                toast.error('접근 권한이 없습니다. 로그인이 필요합니다.');
+            } else if (error.message === 'Network Error') {
+                toast.error('서버와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
             }
         } finally {
             setLoading(false);
             setInitialCheckDone(true);
+            console.log('Login status check completed');
         }
     }, []);
 
@@ -108,6 +147,8 @@ function AppContent() {
         try {
             await api.get('/logout');
             setUser(null);
+            Cookies.remove('Authorization');
+            Cookies.remove('refresh');
             navigate('/');
             toast.success('로그아웃되었습니다.');
         } catch (error) {
@@ -115,6 +156,7 @@ function AppContent() {
             toast.error(`로그아웃에 실패했습니다: ${error.message}`);
         }
     };
+
 
     useEffect(() => {
         const interceptor = api.interceptors.response.use(
@@ -124,10 +166,13 @@ function AppContent() {
                 if (error.response && error.response.status === 401 && !originalRequest._retry) {
                     originalRequest._retry = true;
                     try {
-                        await refreshAccessToken();
+                        const newAccessToken = await refreshAccessToken();
+                        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
                         return api(originalRequest);
                     } catch (refreshError) {
                         setUser(null);
+                        Cookies.remove('Authorization');
+                        Cookies.remove('refresh');
                         return Promise.reject(refreshError);
                     }
                 }
