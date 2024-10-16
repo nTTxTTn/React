@@ -6,8 +6,7 @@ import axios from 'axios';
 import './FlashcardView.css';
 
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL,
-    withCredentials: true
+    baseURL: process.env.REACT_APP_API_BASE_URL
 });
 
 // 요청 인터셉터
@@ -40,7 +39,7 @@ function FlashcardView() {
     const fetchWordList = async () => {
         try {
             console.log('Fetching word list for id:', id);
-            const response = await api.get(`/api/vocalist/${id}`);
+            const response = await api.get(`/api/vocalist/show/${id}`);
             console.log('Vocalist response:', response.data);
             const wordListData = response.data;
 
