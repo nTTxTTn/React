@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,21 +22,28 @@ function QuizPage() {
     const [selectedListId, setSelectedListId] = useState(null);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchWordLists();
-    }, [showPublicLists]);
-
-    const fetchWordLists = async () => {
+    const fetchWordLists = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
             const endpoint = showPublicLists ? '/api/vocalist/showall' : '/api/uservocalist';
-            const response = await api.get(endpoint);
+            console.log(`Fetching word lists from: ${endpoint}`);
+
+            let config = {};
+            if (!showPublicLists) {
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    config.headers = { 'Authorization': `Bearer ${token}` };
+                    console.log('Access Token:', token);  // 콘솔에 액세스 토큰 출력
+                }
+            }
+
+            const response = await api.get(endpoint, config);
             const lists = response.data;
 
             const processedLists = await Promise.all(lists.map(async item => {
                 const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
-                const wordsResponse = await api.get(`/api/vocacontent/showall/${listData.id}`);
+                const wordsResponse = await api.get(`/api/vocacontent/showall/${listData.id}`, config);
                 return {
                     id: listData.id,
                     title: listData.title || '제목 없음',
@@ -47,11 +54,20 @@ function QuizPage() {
             setWordLists(processedLists);
         } catch (error) {
             console.error('Failed to fetch word lists:', error);
-            setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
+            if (error.response && error.response.status === 401) {
+                alert('로그인이 필요합니다.');
+                navigate('/');  // 메인 페이지로 이동
+            } else {
+                setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
+            }
         } finally {
             setLoading(false);
         }
-    };
+    }, [showPublicLists, navigate]);
+
+    useEffect(() => {
+        fetchWordLists();
+    }, [fetchWordLists]);
 
     const selectList = (id) => {
         setSelectedListId(id);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 function EditWordList() {
-    const { user, accessToken, setAccessToken } = useContext(UserContext);
+    const { user, setAccessToken } = useContext(UserContext);
     const [wordList, setWordList] = useState({ title: '', words: [] });
     const [newWord, setNewWord] = useState({ text: '', transtext: '', sampleSentence: '' });
     const [loading, setLoading] = useState(true);
@@ -20,46 +20,44 @@ function EditWordList() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-        } else {
-            fetchWordList();
-        }
-    }, [id, user, navigate]);
-
-    const refreshToken = async () => {
+    const refreshToken = useCallback(async () => {
         try {
-            const refreshResponse = await api.post('/api/auth/refresh');
-            setAccessToken(refreshResponse.data.accessToken);
-            return refreshResponse.data.accessToken;
+            const refreshResponse = await api.post('/reissue');
+            const newToken = refreshResponse.data.accessToken;
+            setAccessToken(newToken);
+            localStorage.setItem('accessToken', newToken);
+            return newToken;
         } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
             setError('세션이 만료되었습니다. 다시 로그인해주세요.');
             navigate('/login');
             throw refreshError;
         }
-    };
+    }, [setAccessToken, navigate]);
 
-    const handleApiCall = async (apiFunc) => {
+    const handleApiCall = useCallback(async (apiFunc) => {
         try {
-            return await apiFunc();
+            const token = localStorage.getItem('accessToken');
+            console.log('Using access token:', token); // 토큰 로깅
+            return await apiFunc(token);
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 const newToken = await refreshToken();
+                console.log('Using new access token after refresh:', newToken); // 새 토큰 로깅
                 return await apiFunc(newToken);
             }
             throw error;
         }
-    };
+    }, [refreshToken]);
 
-    const fetchWordList = async () => {
+    const fetchWordList = useCallback(async () => {
         try {
             setLoading(true);
             const [listResponse, wordsResponse] = await Promise.all([
-                handleApiCall((token = accessToken) => api.get(`/api/vocalist/show/${id}`, {
+                handleApiCall((token) => api.get(`/api/vocalist/show/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })),
-                handleApiCall((token = accessToken) => api.get(`/api/vocacontent/showall/${id}`, {
+                handleApiCall((token) => api.get(`/api/vocacontent/showall/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 }))
             ]);
@@ -86,7 +84,15 @@ function EditWordList() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, handleApiCall]);
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        } else {
+            fetchWordList();
+        }
+    }, [user, navigate, fetchWordList]);
 
     const handleTitleChange = (e) => {
         setWordList(prev => ({ ...prev, title: e.target.value }));
@@ -103,7 +109,7 @@ function EditWordList() {
 
     const handleSaveTitle = async () => {
         try {
-            await handleApiCall((token = accessToken) => api.patch(`/api/vocalist/modify/${id}`,
+            await handleApiCall((token) => api.patch(`/api/vocalist/modify/${id}`,
                 { title: wordList.title },
                 { headers: { Authorization: `Bearer ${token}` } }
             ));
@@ -117,7 +123,7 @@ function EditWordList() {
     const handleSaveWord = async (wordId) => {
         const wordToUpdate = wordList.words.find(word => word.id === wordId);
         try {
-            await handleApiCall((token = accessToken) => api.patch(`/api/vocacontent/modify/${id}/${wordId}`,
+            await handleApiCall((token) => api.patch(`/api/vocacontent/modify/${id}/${wordId}`,
                 {
                     text: wordToUpdate.text,
                     transtext: wordToUpdate.transtext,
@@ -135,7 +141,7 @@ function EditWordList() {
     const handleAddWord = async () => {
         if (newWord.text && newWord.transtext) {
             try {
-                const response = await handleApiCall((token = accessToken) => api.post(`/api/vocacontent/create/${id}`,
+                const response = await handleApiCall((token) => api.post(`/api/vocacontent/create/${id}`,
                     newWord,
                     { headers: { Authorization: `Bearer ${token}` } }
                 ));
@@ -153,7 +159,7 @@ function EditWordList() {
 
     const handleDeleteWord = async (wordId) => {
         try {
-            await handleApiCall((token = accessToken) => api.delete(`/api/vocacontent/delete/${id}/${wordId}`,
+            await handleApiCall((token) => api.delete(`/api/vocacontent/delete/${id}/${wordId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             ));
             setWordList(prevState => ({

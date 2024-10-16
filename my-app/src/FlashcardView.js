@@ -10,10 +10,26 @@ const api = axios.create({
     withCredentials: true
 });
 
+// 요청 인터셉터
+api.interceptors.request.use(request => {
+    console.log('Starting Request', request)
+    return request
+})
+
+// 응답 인터셉터
+api.interceptors.response.use(response => {
+    console.log('Response:', response)
+    return response
+}, error => {
+    console.log('Response Error:', error)
+    return Promise.reject(error)
+})
+
 function FlashcardView() {
     const [wordList, setWordList] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
+    const [error, setError] = useState(null);
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -23,10 +39,16 @@ function FlashcardView() {
 
     const fetchWordList = async () => {
         try {
+            console.log('Fetching word list for id:', id);
             const response = await api.get(`/api/vocalist/${id}`);
+            console.log('Vocalist response:', response.data);
             const wordListData = response.data;
+
+            console.log('Fetching words for id:', id);
             const wordsResponse = await api.get(`/api/vocacontent/showall/${id}`);
+            console.log('Vocacontent response:', wordsResponse.data);
             const wordsData = wordsResponse.data;
+
             setWordList({
                 title: wordListData.title,
                 words: wordsData.map(word => ({
@@ -38,7 +60,7 @@ function FlashcardView() {
             });
         } catch (error) {
             console.error('Failed to fetch word list:', error);
-            navigate('/words');
+            setError(`단어 목록을 불러오는 데 실패했습니다. 오류: ${error.message}`);
         }
     };
 
@@ -78,7 +100,8 @@ function FlashcardView() {
         }
     };
 
-    if (!wordList) return <div className="loading">Loading...</div>;
+    if (error) return <div className="error-message">{error}</div>;
+    if (!wordList) return <div className="loading">단어 목록을 불러오는 중입니다...</div>;
 
     return (
         <div className="flashcard-view">

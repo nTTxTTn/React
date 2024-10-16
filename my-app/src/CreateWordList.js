@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateWordList.css';
 import axios from 'axios';
@@ -13,7 +13,7 @@ const api = axios.create({
 });
 
 function CreateWordList() {
-    const { user, accessToken, setAccessToken } = useContext(UserContext);
+    const { user, setAccessToken } = useContext(UserContext);
     const [title, setTitle] = useState('');
     const [words, setWords] = useState([]);
     const [currentWord, setCurrentWord] = useState({ text: '', transtext: '', sampleSentence: '' });
@@ -25,27 +25,30 @@ function CreateWordList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log('CreateWordList component mounted. User:', user);
+        console.log('CreateWordList component updated. User:', user);
         if (!user) {
             navigate('/login');
         }
     }, [user, navigate]);
 
-    const refreshToken = async () => {
+    const refreshToken = useCallback(async () => {
         try {
             const response = await api.post('/reissue');
             const newToken = response.data.accessToken;
             setAccessToken(newToken);
+            localStorage.setItem('accessToken', newToken);
             return newToken;
         } catch (error) {
             console.error('Failed to refresh token:', error);
             throw error;
         }
-    };
+    }, [setAccessToken]);
 
-    const handleApiCall = async (apiFunc) => {
+    const handleApiCall = useCallback(async (apiFunc) => {
         try {
-            return await apiFunc(accessToken);
+            const token = localStorage.getItem('accessToken');
+            console.log('Access Token being used:', token); // 토큰 로깅
+            return await apiFunc(token);
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 try {
@@ -59,7 +62,7 @@ function CreateWordList() {
             }
             throw error;
         }
-    };
+    }, [refreshToken, navigate]);
 
     const createWordList = async () => {
         if (!title) {
