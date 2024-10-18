@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faSync } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import './QuizingPage.css';
+import { UserContext } from './App';
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -11,6 +12,7 @@ const api = axios.create({
 });
 
 function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistId }) {
+    const { user, setAccessToken } = useContext(UserContext);
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [score, setScore] = useState(0);
     const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
@@ -20,8 +22,44 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
     const navigate = useNavigate();
 
     useEffect(() => {
-        generateQuestion(selectedWords);
-    }, []);
+        if (!user) {
+            navigate('/login');
+        } else {
+            generateQuestion(selectedWords);
+        }
+    }, [user, navigate, selectedWords]);
+
+    const refreshToken = useCallback(async () => {
+        try {
+            const response = await api.post('/reissue');
+            const newToken = response.data.accessToken;
+            setAccessToken(newToken);
+            localStorage.setItem('accessToken', newToken);
+            return newToken;
+        } catch (error) {
+            console.error('Failed to refresh token:', error);
+            throw error;
+        }
+    }, [setAccessToken]);
+
+    const handleApiCall = useCallback(async (apiFunc) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            return await apiFunc(token);
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                try {
+                    const newToken = await refreshToken();
+                    return await apiFunc(newToken);
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError);
+                    navigate('/login');
+                    throw refreshError;
+                }
+            }
+            throw error;
+        }
+    }, [refreshToken, navigate]);
 
     const generateQuestion = (words) => {
         if (currentQuestionNumber > quizLength) {
@@ -98,15 +136,38 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
 
     const saveQuizScore = async () => {
         const currentDate = new Date().toISOString();
-        await api.post(`/api/quiz/history/${vocalistId}`, {
-            score: score,
-            date: currentDate
-        });
+        try {
+            await handleApiCall((token) =>
+                api.post(`/api/quiz/history/${vocalistId}`, {
+                    score: score,
+                    date: currentDate
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            );
+
+            await handleApiCall((token) =>
+                api.post('/api/users/addtotalscore', {
+                    score: score
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            );
+
+            console.log('퀴즈 점수가 성공적으로 저장되었습니다.');
+        } catch (error) {
+            console.error('퀴즈 점수 저장 중 오류 발생:', error);
+            throw error;
+        }
     };
 
     const handleQuizQuit = () => {
         navigate('/'); // 홈 화면으로 이동
     };
+
+    if (!user) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div className="quizing-page">
