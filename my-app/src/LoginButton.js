@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 import './LoginButton.css';
 
 function LoginButton({ user, onLogin, onLogout }) {
     const navigate = useNavigate();
 
     const handleLogin = () => {
-        onLogin(); // 직접 onLogin 함수 호출
+        onLogin();
     };
 
     const handleLogout = async () => {
@@ -16,6 +17,26 @@ function LoginButton({ user, onLogin, onLogout }) {
         } catch (error) {
             console.error('Logout failed:', error);
             toast.error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
+        }
+    };
+
+    const handleSendToken = async () => {
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+            try {
+                const response = await axios.get('https://vocalist.kro.kr/swagger-ui/index.html#', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                console.log('API Response:', response.data);
+                toast.success('토큰이 성공적으로 전송되었습니다.');
+            } catch (error) {
+                console.error('Token sending failed:', error);
+                toast.error('토큰 전송에 실패했습니다.');
+            }
+        } else {
+            toast.error('액세스 토큰이 없습니다. 다시 로그인해 주세요.');
         }
     };
 
@@ -32,13 +53,13 @@ function LoginButton({ user, onLogin, onLogout }) {
         );
     }
 
-    // 로그인된 사용자 UI는 그대로 유지
     return (
         <div className="login-button">
             <div className="user-info">
                 <img src={user.picture} alt={user.name} className="user-avatar" />
                 <span className="user-name">{user.name}</span>
                 <button onClick={handleLogout} className="logout-btn">로그아웃</button>
+                <button onClick={handleSendToken} className="send-token-btn">토큰 전송</button>
             </div>
         </div>
     );
