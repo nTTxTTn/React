@@ -26,12 +26,11 @@ function Sidebar() {
                 <FontAwesomeIcon icon={isCollapsed ? faBars : faChevronLeft}/>
             </button>
             <Link to="/" className="sidebar-header">
-                <div className="logo-container">
-                    <svg className="logo" viewBox="0 0 24 24">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                    </svg>
-                </div>
-                {!isCollapsed && <h1 className="app-title">단어퀴즈</h1>}
+                <img
+                    src={process.env.PUBLIC_URL + '/image.png'}
+                    alt="폴어보카 VOCALIST"
+                    className="logo-image"
+                />
             </Link>
             <nav className="sidebar-nav">
                 <Link to="/" className={`nav-item ${isActive('/') ? 'active' : ''}`}>

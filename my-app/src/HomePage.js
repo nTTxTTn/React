@@ -17,8 +17,8 @@ function HomePage({ user }) {
 
     return (
         <div className="home-page">
-            <h1 className="page-title">단어퀴즈에 오신 것을 환영합니다!</h1>
-            <p className="page-description">단어를 학습하고 퀴즈를 풀어보세요.</p>
+            <h1 className="page-title">풀어보카에 오신 것을 환영합니다!</h1>
+            <p className="page-description">나만의 단어장을 만들고 퀴즈를 풀어보세요.</p>
             <div className="home-buttons">
                 <button onClick={handleCreateWordList} className="home-button">
                     <FontAwesomeIcon icon={faPlus} />

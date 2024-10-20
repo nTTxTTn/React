@@ -103,7 +103,7 @@ input[type="text"]:focus, select:focus {
     justify-content: flex-end;
     align-items: center;
     padding: 10px 20px;
-    background-color: var(--background-color);
+    background-color: var(--sidebar-background);
     border-bottom: 1px solid var(--border-color);
 }
 

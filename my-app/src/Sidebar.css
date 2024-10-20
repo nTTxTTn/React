@@ -244,3 +244,17 @@
         right: -30px;
     }
 }
+.logo-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.sidebar.collapsed .logo-image {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    padding: 5px;
+}
