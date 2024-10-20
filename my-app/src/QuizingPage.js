@@ -21,13 +21,18 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
     const [userInput, setUserInput] = useState('');
     const navigate = useNavigate();
 
+    console.log('QuizingPage received vocalistId:', vocalistId);
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
+        } else if (!vocalistId) {
+            console.error('vocalistId is missing in QuizingPage');
+            // 필요한 경우 여기서 에러 처리나 리다이렉션을 수행할 수 있습니다.
         } else {
             generateQuestion(selectedWords);
         }
-    }, [user, navigate, selectedWords]);
+    }, [user, navigate, selectedWords, vocalistId]);
 
     const refreshToken = useCallback(async () => {
         try {
@@ -124,6 +129,7 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
     };
 
     const handleQuizEnd = async () => {
+        console.log('Quiz ended. Attempting to save score...');
         try {
             await saveQuizScore();
             onQuizEnd(score, quizLength);
@@ -135,8 +141,14 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
     };
 
     const saveQuizScore = async () => {
+        if (!vocalistId) {
+            console.error('vocalistId is not defined');
+            throw new Error('vocalistId is missing');
+        }
+
         const currentDate = new Date().toISOString();
         try {
+            console.log('Attempting to save quiz history for vocalistId:', vocalistId);
             await handleApiCall((token) =>
                 api.post(`/api/quiz/history/${vocalistId}`, {
                     score: score,
@@ -145,6 +157,7 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
                     headers: { Authorization: `Bearer ${token}` }
                 })
             );
+            console.log('Quiz history saved successfully');
 
             await handleApiCall((token) =>
                 api.post('/api/users/addtotalscore', {
@@ -153,6 +166,7 @@ function QuizingPage({ quizType, quizLength, selectedWords, onQuizEnd, vocalistI
                     headers: { Authorization: `Bearer ${token}` }
                 })
             );
+            console.log('Total score updated successfully');
 
             console.log('퀴즈 점수가 성공적으로 저장되었습니다.');
         } catch (error) {
