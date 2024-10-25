@@ -32,7 +32,6 @@ function WordListPage({ user }) {
                 const token = localStorage.getItem('accessToken');
                 if (token) {
                     config.headers = { 'Authorization': `Bearer ${token}` };
-                    console.log('Access Token:', token);  // 콘솔에 액세스 토큰 출력
                 }
             }
 
@@ -44,18 +43,27 @@ function WordListPage({ user }) {
             }
 
             const processedLists = await Promise.all(lists.map(async item => {
-                const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
-                const wordCountResponse = await api.get(`/api/vocacontent/showall/${listData.id}`, config);
-                const wordCount = wordCountResponse.data.length;
-
-                return {
-                    id: listData.id,
-                    title: listData.title || '제목 없음',
-                    wordCount: wordCount,
-                    author: listData.email,
-                    isPublic: listData.secret === 1,
-                    userName: (endpoint === '/api/uservocalist' ? item.userEntity.name : null) || listData.email.split('@')[0]
-                };
+                let listData;
+                if (endpoint === '/api/uservocalist') {
+                    listData = item.vocaListEntity;
+                    return {
+                        id: listData.id,
+                        title: listData.title || '제목 없음',
+                        wordCount: item.userEntity.count || 0,
+                        author: listData.email,
+                        isPublic: listData.secret === 1,
+                        userName: item.userEntity.name
+                    };
+                } else {
+                    return {
+                        id: item.id,
+                        title: item.title || '제목 없음',
+                        wordCount: item.count || 0,
+                        author: item.email,
+                        isPublic: item.secret === 1,
+                        userName: item.username
+                    };
+                }
             }));
 
             console.log(`Fetched ${processedLists.length} word lists`);
@@ -64,7 +72,7 @@ function WordListPage({ user }) {
             console.error('Failed to fetch word lists:', error);
             if (error.response && error.response.status === 401) {
                 alert('로그인이 필요합니다.');
-                navigate('/');  // 메인 페이지로 이동
+                navigate('/');
             } else {
                 setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
             }

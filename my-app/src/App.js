@@ -16,6 +16,7 @@ import EditWordList from "./EditWordList";
 import QuizPage from "./QuizPage";
 import AuthCallback from './AuthCallback';
 import QuizResult from "./QuizResult";
+import QuizHistory from './QuizHistory';
 import './App.css';
 
 export const UserContext = createContext(null);
@@ -164,6 +165,7 @@ function AppContent() {
                             <Route path="/quiz" element={<QuizPage user={user} />} />
                             <Route path="/quiz-result" element={<QuizResult user={user} />} />
                             <Route path="/auth-callback" element={<AuthCallback checkLoginStatus={checkLoginStatus} saveAccessToken={saveAccessToken} />} />
+                            <Route path="/quiz-history" element={<QuizHistory />} />
                         </Routes>
                     </main>
                 </div>

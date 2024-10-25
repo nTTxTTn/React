@@ -45,3 +45,53 @@
     font-size: 16px;
     font-weight: bold;
 }
+
+/* 알림 메시지 관련 새로운 스타일 */
+.alert-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 16px 24px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.alert-message p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: var(--light-text-color);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.close-button:hover {
+    color: var(--text-color);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
