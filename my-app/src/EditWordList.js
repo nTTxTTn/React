@@ -22,7 +22,7 @@ function EditWordList() {
 
     const refreshToken = useCallback(async () => {
         try {
-            const refreshResponse = await api.post('/reissue');
+            const refreshResponse = await api.post('/api/reissue');
             const newToken = refreshResponse.data.accessToken;
             setAccessToken(newToken);
             localStorage.setItem('accessToken', newToken);

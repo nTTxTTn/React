@@ -214,6 +214,14 @@
     background-color: var(--error-color);
     color: white;
 }
+.copy-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.copy-btn:hover {
+    background-color: var(--primary-color);
+}
 
 .action-btn .tooltip {
     visibility: hidden;

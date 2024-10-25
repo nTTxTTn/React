@@ -79,3 +79,33 @@
     font-size: 14px;
     font-weight: bold;
 }
+
+.title-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-left: 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.title-badge.expert {
+    background-color: #9333ea;
+}
+
+.title-badge.advanced {
+    background-color: #3b82f6;
+}
+
+.title-badge.intermediate {
+    background-color: #22c55e;
+}
+
+.title-badge.beginner {
+    background-color: #eab308;
+}
+
+.title-badge.newcomer {
+    background-color: #6b7280;
+}

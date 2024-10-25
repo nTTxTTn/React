@@ -4,6 +4,30 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import './LoginButton.css';
 
+const UserTitle = ({ totalScore }) => {
+    const getTitleAndColor = (score) => {
+        if (score >= 1000) {
+            return { title: '단어왕', className: 'title-badge expert' };
+        } else if (score >= 500) {
+            return { title: '단어중수', className: 'title-badge advanced' };
+        } else if (score >= 200) {
+            return { title: '성실러', className: 'title-badge intermediate' };
+        } else if (score >= 100) {
+            return { title: '초보자', className: 'title-badge beginner' };
+        } else {
+            return { title: '새내기', className: 'title-badge newcomer' };
+        }
+    };
+
+    const { title, className } = getTitleAndColor(totalScore);
+
+    return (
+        <span className={className}>
+            {title}
+        </span>
+    );
+};
+
 function LoginButton({ user, onLogin, onLogout }) {
     const navigate = useNavigate();
 
@@ -20,25 +44,6 @@ function LoginButton({ user, onLogin, onLogout }) {
         }
     };
 
-    const handleSendToken = async () => {
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-            try {
-                const response = await axios.get('https://vocalist.kro.kr/swagger-ui/index.html#', {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-                console.log('API Response:', response.data);
-                toast.success('토큰이 성공적으로 전송되었습니다.');
-            } catch (error) {
-                console.error('Token sending failed:', error);
-                toast.error('토큰 전송에 실패했습니다.');
-            }
-        } else {
-            toast.error('액세스 토큰이 없습니다. 다시 로그인해 주세요.');
-        }
-    };
 
     if (user === null) {
         return (
@@ -59,7 +64,6 @@ function LoginButton({ user, onLogin, onLogout }) {
                 <img src={user.picture} alt={user.name} className="user-avatar" />
                 <span className="user-name">{user.name}</span>
                 <button onClick={handleLogout} className="logout-btn">로그아웃</button>
-                <button onClick={handleSendToken} className="send-token-btn">토큰 전송</button>
             </div>
         </div>
     );
