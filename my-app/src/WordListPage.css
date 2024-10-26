@@ -223,6 +223,15 @@
     background-color: var(--primary-color);
 }
 
+.download-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.download-btn:hover {
+    background-color: #45a049;
+}
+
 .action-btn .tooltip {
     visibility: hidden;
     width: 80px;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp, faGlobe, faUser, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faPlay, faEdit, faThLarge, faList, faSearch, faSortAlphaDown, faSortAlphaUp, faGlobe, faUser, faCopy, faDownload } from '@fortawesome/free-solid-svg-icons';
 import './WordListPage.css';
 
 const api = axios.create({
@@ -112,37 +112,61 @@ function WordListPage({ user }) {
 
             const lists = response.data;
             const processedLists = await Promise.all(lists.map(async item => {
-                if (endpoint === '/api/uservocalist') {
-                    const listData = item.vocaListEntity;
-                    console.log('단어장 엔티티:', listData);
-                    console.log('매핑될 ID:', listData.id);
-                    const actualWordCount = await fetchWordCount(item.id, token);
-                    return {
-                        id: item.id,
-                        title: listData.title || '제목 없음',
-                        wordCount: actualWordCount,
-                        author: listData.email,
-                        isPublic: listData.secret === 1,
-                        userName: item.userEntity.name,
-                        userEmail: item.userEntity.email
-                    };
-                } else {
-                    const actualWordCount = await fetchWordCount(item.id, token);
-                    return {
-                        id: item.id,
-                        title: item.title || '제목 없음',
-                        wordCount: actualWordCount,
-                        author: item.email,
-                        isPublic: item.secret === 1,
-                        userName: item.username,
-                        userEmail: item.email
-                    };
+                try {
+                    if (endpoint === '/api/uservocalist') {
+                        const listData = item.vocaListEntity;
+                        console.log('단어장 엔티티:', listData);
+                        console.log('매핑될 ID:', listData.id);
+
+                        // 단어 수 조회
+                        const actualWordCount = await fetchWordCount(item.id, token);
+
+                        // 단어 수가 0인 경우 null 반환
+                        if (actualWordCount === 0) {
+                            console.log(`단어 수가 0인 단어장 필터링 - ID: ${item.id}`);
+                            return null;
+                        }
+
+                        return {
+                            id: item.id,
+                            title: listData.title || '제목 없음',
+                            wordCount: actualWordCount,
+                            author: listData.email,
+                            isPublic: listData.secret === 1,
+                            userName: item.userEntity.name,
+                            userEmail: item.userEntity.email
+                        };
+                    } else {
+                        const actualWordCount = await fetchWordCount(item.id, token);
+
+                        // 단어 수가 0인 경우 null 반환
+                        if (actualWordCount === 0) {
+                            console.log(`단어 수가 0인 단어장 필터링 - ID: ${item.id}`);
+                            return null;
+                        }
+
+                        return {
+                            id: item.id,
+                            title: item.title || '제목 없음',
+                            wordCount: actualWordCount,
+                            author: item.email,
+                            isPublic: item.secret === 1,
+                            userName: item.username,
+                            userEmail: item.email
+                        };
+                    }
+                } catch (error) {
+                    console.error(`단어장 처리 중 오류 발생 - ID: ${item.id}:`, error);
+                    return null; // 오류 발생 시 해당 단어장 제외
                 }
             }));
 
-            console.log('처리된 단어장 목록:', processedLists);
-            console.log(`${processedLists.length}개의 단어장을 불러왔습니다`);
-            setWordLists(processedLists);
+            // null 값 필터링
+            const filteredLists = processedLists.filter(list => list !== null);
+
+            console.log('처리된 단어장 목록:', filteredLists);
+            console.log(`${filteredLists.length}개의 유효한 단어장을 불러왔습니다`);
+            setWordLists(filteredLists);
         } catch (error) {
             console.error('단어장 목록 조회 실패:', error);
             if (error.response && error.response.status === 401) {
@@ -216,6 +240,67 @@ function WordListPage({ user }) {
             }
         });
 
+
+    const downloadCSV = async (id, title) => {
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            navigate('/');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                navigate('/');
+                return;
+            }
+
+            console.log('CSV 다운로드 시도 - ID:', id);
+            const config = {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'text/csv'
+                }
+            };
+
+            const response = await api.get(`/api/vocalist/csvdown/${id}`, config);
+
+            // UTF-8 BOM 추가
+            const BOM = '\uFEFF';
+            const csvContent = BOM + response.data;
+
+            // CSV 데이터를 Blob으로 변환 (UTF-8 인코딩 명시)
+            const blob = new Blob([csvContent], {
+                type: 'text/csv;charset=utf-8;'
+            });
+
+            // 다운로드 링크 생성
+            const link = document.createElement('a');
+            const url = window.URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', `${title}_단어장.csv`);
+
+            // 링크 클릭 시뮬레이션
+            document.body.appendChild(link);
+            link.click();
+
+            // 클린업
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            console.log('CSV 다운로드 성공');
+        } catch (error) {
+            console.error('CSV 다운로드 실패:', error);
+            if (error.response && error.response.status === 401) {
+                alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+                navigate('/');
+            } else {
+                alert('CSV 다운로드에 실패했습니다. 다시 시도해 주세요.');
+            }
+        }
+    };
+
     return (
         <div className="word-list-page">
             <div className="page-header">
@@ -280,6 +365,17 @@ function WordListPage({ user }) {
                                         <FontAwesomeIcon icon={faPlay} />
                                         <span className="tooltip">학습하기</span>
                                     </Link>
+
+                                    {user && (
+                                        <button
+                                            onClick={() => downloadCSV(list.id, list.title)}
+                                            className="action-btn download-btn"
+                                            title="CSV 다운로드"
+                                        >
+                                            <FontAwesomeIcon icon={faDownload} />
+                                            <span className="tooltip">CSV 다운로드</span>
+                                        </button>
+                                    )}
 
                                     {user && showPublicLists && (
                                         <button

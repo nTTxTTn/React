@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import './LoginButton.css';
+
+// axios 인스턴스 생성
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    withCredentials: true
+});
 
 const UserTitle = ({ totalScore }) => {
     const getTitleAndColor = (score) => {
@@ -15,7 +21,7 @@ const UserTitle = ({ totalScore }) => {
         } else if (score >= 100) {
             return { title: '초보자', className: 'title-badge beginner' };
         } else {
-            return { title: '새내기', className: 'title-badge newcomer' };
+            return { title: '퀴즈새내기', className: 'title-badge newcomer' };
         }
     };
 
@@ -30,6 +36,22 @@ const UserTitle = ({ totalScore }) => {
 
 function LoginButton({ user, onLogin, onLogout }) {
     const navigate = useNavigate();
+    const [userScore, setUserScore] = useState(0);
+
+    useEffect(() => {
+        if (user) {
+            const fetchUserScore = async () => {
+                try {
+                    const response = await api.get('/api/users/myuserdata');
+                    setUserScore(response.data.totalScore || 0);
+                } catch (error) {
+                    console.error('Failed to fetch user score:', error);
+                    toast.error('사용자 정보를 불러오는데 실패했습니다.');
+                }
+            };
+            fetchUserScore();
+        }
+    }, [user]);
 
     const handleLogin = () => {
         onLogin();
@@ -43,7 +65,6 @@ function LoginButton({ user, onLogin, onLogout }) {
             toast.error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
         }
     };
-
 
     if (user === null) {
         return (
@@ -61,8 +82,10 @@ function LoginButton({ user, onLogin, onLogout }) {
     return (
         <div className="login-button">
             <div className="user-info">
-                <img src={user.picture} alt={user.name} className="user-avatar" />
-                <span className="user-name">{user.name}</span>
+                <div className="user-details">
+                    <span className="user-name">{user.name}</span>
+                    <UserTitle totalScore={userScore} />
+                </div>
                 <button onClick={handleLogout} className="logout-btn">로그아웃</button>
             </div>
         </div>

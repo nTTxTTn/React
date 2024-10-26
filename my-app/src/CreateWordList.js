@@ -33,7 +33,7 @@ function CreateWordList() {
 
     const refreshToken = useCallback(async () => {
         try {
-            const response = await api.post('/reissue');
+            const response = await api.post('/api/reissue');
             const newToken = response.data.accessToken;
             setAccessToken(newToken);
             localStorage.setItem('accessToken', newToken);

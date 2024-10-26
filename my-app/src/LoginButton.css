@@ -13,17 +13,27 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    margin-right: 10px;
+.user-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .user-name {
     font-weight: bold;
     margin-right: 10px;
     color: var(--text-color);
+    order: 2; /* 이름을 칭호 뒤로 배치 */
+}
+
+.title-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    order: 1; /* 칭호를 이름 앞으로 배치 */
 }
 
 .logout-btn {
@@ -78,16 +88,6 @@
     padding: 10px 10px 10px 0;
     font-size: 14px;
     font-weight: bold;
-}
-
-.title-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    margin-left: 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: white;
 }
 
 .title-badge.expert {
