@@ -1,28 +1,42 @@
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #f59e0b;
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --text-color: #374151;
+    --background-color: #ffffff;
+}
+
 .flashcard-view {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .flashcard-title {
     color: var(--primary-color);
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .flashcard-container {
     perspective: 1000px;
-    margin-bottom: 20px;
     position: relative;
+    min-height: 300px; /* 기본 최소 높이 */
 }
 
 .flashcard {
     position: relative;
     width: 100%;
-    height: 200px;
+    height: 100%;
+    min-height: inherit; /* 컨테이너의 최소 높이를 상속 */
     transition: transform 0.6s;
     transform-style: preserve-3d;
     cursor: pointer;
+    margin-bottom: 20px; /* 카드와 버튼 사이 간격 */
 }
 
 .flashcard.flipped {
@@ -51,6 +65,39 @@
     background-color: var(--primary-color);
     color: white;
     transform: rotateY(180deg);
+    flex-direction: column;
+    padding: 20px;
+}
+
+.meaning-section,
+.example-section {
+    width: 100%;
+    text-align: left;
+}
+
+.meaning-section {
+    margin-bottom: 20px;
+}
+
+.meaning-section h3,
+.example-section h3 {
+    font-size: 0.8em;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+.meaning-section p,
+.example-section p {
+    margin: 0;
+}
+
+.meaning-section p {
+    font-size: 1.2em;
+}
+
+.example-section p {
+    font-size: 0.9em;
+    opacity: 0.9;
 }
 
 .flashcard-tooltip {
@@ -90,12 +137,16 @@
     opacity: 1;
 }
 
+/* 버튼 컨트롤 영역 수정 */
 .flashcard-controls {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 20px;
+    padding: 10px;
     flex-wrap: wrap;
+    background-color: transparent; /* 배경 제거 */
+    box-shadow: none; /* 그림자 제거 */
+    margin-top: 10px; /* 카드와의 간격 */
 }
 
 .control-btn {
@@ -108,6 +159,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 }
 
 .control-btn:hover {
@@ -130,15 +182,19 @@
     color: white;
 }
 
+.speak-btn.speaking {
+    background-color: var(--error-color);
+}
+
 .quit-btn {
     background-color: var(--error-color);
     color: white;
 }
 
 .progress-text {
-    margin-top: 10px;
     font-size: 14px;
     color: var(--text-color);
+    margin-top: 10px;
 }
 
 .loading {
@@ -149,25 +205,35 @@
 }
 
 @media (max-width: 600px) {
-    .flashcard {
-        height: 150px;
+    .flashcard-container {
+        min-height: 250px;
     }
 
     .flashcard-front, .flashcard-back {
         font-size: 20px;
     }
 
+    .meaning-section h3,
+    .example-section h3 {
+        font-size: 0.7em;
+    }
+
+    .meaning-section p {
+        font-size: 1em;
+    }
+
+    .example-section p {
+        font-size: 0.8em;
+    }
+
     .control-btn {
         padding: 8px 12px;
         font-size: 12px;
+        flex: 1 1 calc(50% - 8px); /* 2열 배치 */
+        justify-content: center;
     }
 
     .flashcard-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .control-btn {
-        margin-bottom: 10px;
+        gap: 8px;
     }
 }

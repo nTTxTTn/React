@@ -1,16 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import axios from 'axios';
 import './LoginButton.css';
 
-// axios 인스턴스 생성
-const api = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL,
-    withCredentials: true
-});
-
-const UserTitle = ({ totalScore }) => {
+const UserTitle = ({ totalScore = 0 }) => {
     const getTitleAndColor = (score) => {
         if (score >= 1000) {
             return { title: '단어왕', className: 'title-badge expert' };
@@ -36,22 +28,6 @@ const UserTitle = ({ totalScore }) => {
 
 function LoginButton({ user, onLogin, onLogout }) {
     const navigate = useNavigate();
-    const [userScore, setUserScore] = useState(0);
-
-    useEffect(() => {
-        if (user) {
-            const fetchUserScore = async () => {
-                try {
-                    const response = await api.get('/api/users/myuserdata');
-                    setUserScore(response.data.totalScore || 0);
-                } catch (error) {
-                    console.error('Failed to fetch user score:', error);
-                    toast.error('사용자 정보를 불러오는데 실패했습니다.');
-                }
-            };
-            fetchUserScore();
-        }
-    }, [user]);
 
     const handleLogin = () => {
         onLogin();
@@ -62,7 +38,6 @@ function LoginButton({ user, onLogin, onLogout }) {
             await onLogout();
         } catch (error) {
             console.error('Logout failed:', error);
-            toast.error('로그아웃에 실패했습니다. 다시 시도해 주세요.');
         }
     };
 
@@ -84,7 +59,7 @@ function LoginButton({ user, onLogin, onLogout }) {
             <div className="user-info">
                 <div className="user-details">
                     <span className="user-name">{user.name}</span>
-                    <UserTitle totalScore={userScore} />
+                    <UserTitle totalScore={user.totalScore} />
                 </div>
                 <button onClick={handleLogout} className="logout-btn">로그아웃</button>
             </div>

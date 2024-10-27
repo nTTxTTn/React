@@ -34,7 +34,6 @@ function QuizPage() {
                 const token = localStorage.getItem('accessToken');
                 if (token) {
                     config.headers = { 'Authorization': `Bearer ${token}` };
-                    console.log('Access Token:', token);  // 콘솔에 액세스 토큰 출력
                 }
             }
 
@@ -42,21 +41,37 @@ function QuizPage() {
             const lists = response.data;
 
             const processedLists = await Promise.all(lists.map(async item => {
-                const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
-                const wordsResponse = await api.get(`/api/vocacontent/showall/${listData.id}`, config);
-                return {
-                    id: listData.id,
-                    title: listData.title || '제목 없음',
-                    words: wordsResponse.data
-                };
+                try {
+                    // 사용자 단어장과 공개 단어장의 데이터 구조 차이를 처리
+                    const listData = endpoint === '/api/uservocalist' ? item.vocaListEntity : item;
+
+                    // WordListPage처럼 item.id를 사용하여 단어 조회
+                    const wordsResponse = await api.get(`/api/vocacontent/showall/${item.id}`, config);
+
+                    return {
+                        // item.id를 사용하여 중복 방지
+                        id: item.id,
+                        title: listData.title || '제목 없음',
+                        words: wordsResponse.data
+                    };
+                } catch (error) {
+                    console.error(`단어장 처리 중 오류 발생 - ID: ${item.id}:`, error);
+                    return null;
+                }
             }));
 
-            setWordLists(processedLists);
+            // null 값과 단어가 없는 단어장 필터링
+            const filteredLists = processedLists.filter(list =>
+                list !== null && list.words && list.words.length > 0
+            );
+
+            console.log('처리된 단어장 목록:', filteredLists);
+            setWordLists(filteredLists);
         } catch (error) {
             console.error('Failed to fetch word lists:', error);
             if (error.response && error.response.status === 401) {
                 alert('로그인이 필요합니다.');
-                navigate('/');  // 메인 페이지로 이동
+                navigate('/');
             } else {
                 setError('단어장을 불러오는데 실패했습니다. 다시 시도해 주세요.');
             }

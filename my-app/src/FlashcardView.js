@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faArrowLeft, faRedo, faVolumeUp, faArrowRight, faQuestionCircle, faStop } from '@fortawesome/free-solid-svg-icons';
@@ -29,12 +29,40 @@ function FlashcardView() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [error, setError] = useState(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchWordList();
+
+        const synth = window.speechSynthesis;
+        synth.cancel(); // 페이지 로드 시 이전 음성 재생 중지
+
+        return () => {
+            synth.cancel();
+            setIsSpeaking(false);
+        };
     }, [id]);
+
+    // voices 로딩을 위한 useEffect
+    useEffect(() => {
+        const loadVoices = () => {
+            window.speechSynthesis.getVoices();
+        };
+
+        loadVoices();
+
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        return () => {
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = null;
+            }
+        };
+    }, []);
 
     const fetchWordList = async () => {
         try {
@@ -63,6 +91,73 @@ function FlashcardView() {
         }
     };
 
+    const handleSpeechEnd = useCallback(() => {
+        setIsSpeaking(false);
+    }, []);
+
+    const speakWord = useCallback((text) => {
+        const synth = window.speechSynthesis;
+
+        if (!synth) {
+            alert('죄송합니다. 현재 브라우저에서 음성 합성을 지원하지 않습니다.');
+            return;
+        }
+
+        if (isSpeaking) {
+            synth.cancel();
+            setIsSpeaking(false);
+            return;
+        }
+
+        try {
+            synth.cancel();
+
+            const voices = synth.getVoices();
+            const englishVoice = voices.find(voice =>
+                voice.lang.startsWith('en-') && !voice.localService
+            ) || voices[0];
+
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            utterance.voice = englishVoice;
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+
+            utterance.onstart = () => {
+                console.log('음성 재생 시작:', text);
+                setIsSpeaking(true);
+            };
+
+            utterance.onend = () => {
+                console.log('음성 재생 완료');
+                handleSpeechEnd();
+            };
+
+            utterance.onerror = (event) => {
+                console.error('음성 재생 오류:', event);
+                handleSpeechEnd();
+
+                if (event.error === 'interrupted') {
+                    console.log('음성 재생이 중단되었습니다. 다시 시도합니다.');
+                    setTimeout(() => {
+                        synth.speak(utterance);
+                    }, 100);
+                } else {
+                    alert('음성 재생 중 오류가 발생했습니다. 다시 시도해주세요.');
+                }
+            };
+
+            synth.speak(utterance);
+
+        } catch (error) {
+            console.error('음성 재생 시스템 오류:', error);
+            handleSpeechEnd();
+            alert('음성 재생 시스템에 문제가 발생했습니다. 다시 시도해주세요.');
+        }
+    }, [isSpeaking, handleSpeechEnd]);
+
     const handleFlip = () => setIsFlipped(!isFlipped);
 
     const handleNext = () => {
@@ -87,12 +182,6 @@ function FlashcardView() {
         setIsFlipped(false);
     };
 
-    const speakWord = (text) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
-    };
-
     const handleQuit = () => {
         if (window.confirm('정말로 학습을 중단하시겠습니까?')) {
             navigate('/words');
@@ -115,8 +204,14 @@ function FlashcardView() {
                         </div>
                     </div>
                     <div className="flashcard-back">
-                        <p>{wordList.words[currentIndex].transtext}</p>
-                        <p className="sample-sentence">{wordList.words[currentIndex].sampleSentence}</p>
+                        <div className="meaning-section">
+                            <h3>뜻</h3>
+                            <p>{wordList.words[currentIndex].transtext}</p>
+                        </div>
+                        <div className="example-section">
+                            <h3>예문</h3>
+                            <p>{wordList.words[currentIndex].sampleSentence}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,8 +222,13 @@ function FlashcardView() {
                 <button onClick={handleRestart} className="control-btn restart-btn">
                     <FontAwesomeIcon icon={faRedo} /> 처음부터
                 </button>
-                <button onClick={() => speakWord(wordList.words[currentIndex].text)} className="control-btn speak-btn">
-                    <FontAwesomeIcon icon={faVolumeUp} /> 발음 듣기
+                <button
+                    onClick={() => speakWord(wordList.words[currentIndex].text)}
+                    className={`control-btn speak-btn ${isSpeaking ? 'speaking' : ''}`}
+                    disabled={!window.speechSynthesis}
+                >
+                    <FontAwesomeIcon icon={faVolumeUp} />
+                    {isSpeaking ? '중지' : '발음 듣기'}
                 </button>
                 <button onClick={handleNext} className="control-btn next-btn">
                     <FontAwesomeIcon icon={faArrowRight} /> 다음
