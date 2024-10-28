@@ -26,6 +26,15 @@ function HomePage({ user }) {
         }
     };
 
+    const handleStartQuiz = () => {
+        if (user) {
+            navigate('/quiz');
+        } else {
+            setShowAlert(true);
+            setTimeout(() => setShowAlert(false), 3000);
+        }
+    };
+
     return (
         <div className="home-page">
             {showAlert && (
@@ -47,12 +56,12 @@ function HomePage({ user }) {
                     <FontAwesomeIcon icon={faList} />
                     <span>단어장 목록 보기</span>
                 </Link>
-                <Link to="/quiz" className="home-button">
-                    <FontAwesomeIcon icon={faPlay} />
+                <button onClick={handleStartQuiz} className="home-button">
+                    <FontAwesomeIcon icon={faPlay}/>
                     <span>단어 퀴즈 시작</span>
-                </Link>
+                </button>
                 <button onClick={handleQuizHistory} className="home-button">
-                    <FontAwesomeIcon icon={faHistory} />
+                    <FontAwesomeIcon icon={faHistory}/>
                     <span>나의 히스토리</span>
                 </button>
             </div>
