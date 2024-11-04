@@ -5,13 +5,13 @@ import './LoginButton.css';
 const UserTitle = ({ totalScore = 0 }) => {
     const getTitleAndColor = (score) => {
         if (score >= 1000) {
-            return { title: '단어왕', className: 'title-badge expert' };
+            return { title: '풀어보카의퀴즈왕', className: 'title-badge expert' };
         } else if (score >= 500) {
-            return { title: '단어중수', className: 'title-badge advanced' };
+            return { title: '퀴즈중급자', className: 'title-badge advanced' };
         } else if (score >= 200) {
-            return { title: '성실러', className: 'title-badge intermediate' };
+            return { title: '퀴즈좀풀어본사람', className: 'title-badge intermediate' };
         } else if (score >= 100) {
-            return { title: '초보자', className: 'title-badge beginner' };
+            return { title: '퀴즈초보자', className: 'title-badge beginner' };
         } else {
             return { title: '퀴즈새내기', className: 'title-badge newcomer' };
         }
